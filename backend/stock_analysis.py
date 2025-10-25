@@ -2,18 +2,12 @@
 # in seperate file web_scraped.py
 
 ##import web_scraped_mock as ws # FOR web_scraped.py, this will re-run the web scraping / update with latest data
-import sys
-import os
-# Add parent directory to path for imports
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from backend.web_scraped_mock import target_tickers, stock_data #, mentions --> then we can implement that here
+from web_scraped_mock import target_tickers, stock_data #, mentions --> then we can implement that here
 import pandas as pd
 import ta
 import sqlite3
-from backend.notifier import send_alert_email
+from notifier import send_alert_email
 from datetime import datetime
-import numpy as np
 
 data_frames = [] 
 
@@ -52,32 +46,10 @@ def compute_rsi(series, window=14):
 
 data['RSI'] = data.groupby('Ticker')['Close'].transform(lambda x: compute_rsi(x))
 
-# Calculate price change percentage
-data['Price_Change'] = data.groupby('Ticker')['Close'].pct_change() * 100
-data['Price_Change'] = data['Price_Change'].fillna(0)
-
-# Generate sentiment scores (mock for now - will be replaced by actual scraping)
-def generate_mock_sentiment(ticker):
-    """Generate mock sentiment score based on ticker hash for consistency"""
-    # Use ticker hash for consistent results per ticker
-    seed = hash(ticker) % (2**32 - 1)
-    np.random.seed(seed)
-    # Generate sentiment with bias towards neutral-to-positive for popular stocks
-    sentiment = np.random.triangular(-0.8, 0.2, 0.9)
-    return round(sentiment, 2)
-
-# Generate mention count (mock for now)
-def generate_mock_mentions(volume_ratio):
-    """Generate mock mention count based on volume activity"""
-    return int(abs(volume_ratio) * 50 + np.random.randint(10, 100))
-
 # Generate latest alerts summary:
 
-latest = data.groupby('Ticker').tail(1)[['Ticker', 'Close', 'Volume', 'volume_z', 'Volume_Ratio', 'Volume_Alert', 'RSI', 'Price_Change']]
+latest = data.groupby('Ticker').tail(1)[['Ticker', 'Close', 'Volume', 'volume_z', 'Volume_Ratio', 'Volume_Alert', 'RSI']]
 
-# Add sentiment and mentions
-latest['Sentiment_Score'] = latest['Ticker'].apply(generate_mock_sentiment)
-latest['Mention_Count'] = latest['Volume_Ratio'].apply(generate_mock_mentions)
 latest['Timestamp'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 ALERT_THRESHOLD_Z = 1.5
@@ -93,7 +65,7 @@ print(f'{data}')
 # STEP 3: Database setup
 # ---------------------------------------------------------------------
 with sqlite3.connect("backend/alerts.db") as conn:
-    # Dashboard table - includes all metrics for GUI
+    # Dashboard table
     conn.execute("""
         CREATE TABLE IF NOT EXISTS latest_alerts (
             Ticker TEXT PRIMARY KEY,
@@ -103,9 +75,6 @@ with sqlite3.connect("backend/alerts.db") as conn:
             Volume_Ratio REAL,
             Volume_Alert TEXT,
             RSI REAL,
-            Price_Change REAL,
-            Sentiment_Score REAL,
-            Mention_Count INTEGER,
             Timestamp TEXT
         )
     """)
@@ -182,23 +151,9 @@ if newly_added:
 with sqlite3.connect("backend/alerts.db") as conn:
     conn.execute("DELETE FROM latest_alerts")
     for _, row in active_alerts_new.iterrows():
-        conn.execute("""
-            INSERT INTO latest_alerts 
-            (Ticker, Close, Volume, volume_z, Volume_Ratio, Volume_Alert, RSI, Price_Change, Sentiment_Score, Mention_Count, Timestamp)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            row['Ticker'], 
-            row['Close'], 
-            row['Trigger_Volume'], 
-            row['volume_z'],
-            row['Volume_Ratio'], 
-            row['Volume_Alert'], 
-            row['RSI'], 
-            row['Price_Change'],
-            row['Sentiment_Score'],
-            row['Mention_Count'],
-            row['Timestamp']
-        ))
+        conn.execute("""INSERT INTO latest_alerts (Ticker, Close, Volume, volume_z, Volume_Ratio, Volume_Alert, RSI, Timestamp)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)""", (row['Ticker'], row['Close'], row['Trigger_Volume'], row['volume_z'],
+      row['Volume_Ratio'], row['Volume_Alert'], row['RSI'], row['Timestamp']))
 
 
 # Store latest alerts in alerts.db
