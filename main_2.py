@@ -1,14 +1,15 @@
 # data web-scraped with beautiful soup
 # in seperate file web_scraped.py
 
-import web_scraped.py as ws # temporary name
-from ws import target_stickers, stock_data # anything else needed?
+#import web_scraped.py as ws # temporary name
+#from ws import target_stickers, stock_data # anything else needed?
+from web_scraped_mock import target_tickers, stock_data
 import pandas as pd
 import ta
 
 data_frames = [] 
 
-for ticker in target_stickers:
+for ticker in target_tickers:
     df = stock_data(ticker)
     df['Ticker'] = ticker
     data_frames.append(df)
@@ -18,7 +19,10 @@ data = pd.concat(data_frames, ignore_index=True)
 data['volume_z'] = data.groupby('Ticker')['Volume'].transform(
     lambda x: (x - x.rolling(50).mean()) / x.rolling(50).std())
 
-# compute the rolling z score of the volume for eaach target stock
+# compute the rolling z score of the volume for eaach target stock 
+# --> how unusual is the volume compared to the last 50 days
+# --> should we make this less than 50 days to identify short-term spikes?
+# --> or should we make it more than 50 days to make it more robust to fluctuations?
 
 # Classification to classify status of volume spikes
 
@@ -50,4 +54,9 @@ data['RSI'] = data.groupby('Ticker')['Close'].transform(
 #rsi_indicator = ta.momentum.RSIIndicator(close=close_prices, window=50) # should window be 50 or 14?
 #rsi_values = rsi_indicator.rsi()
 #data['RSI_50'] = rsi_values
+
+# CHATGPT SUGGESTION (to display a table / dashboard of results for *testing purposes*):
+latest = data.groupby('Ticker').tail(1)[['Ticker', 'Volume', 'volume_z', 'Volume_Alert', 'RSI']]
+print("\n=== Latest Volume and RSI Alerts ===")
+print(latest.sort_values('volume_z', ascending=False).to_string(index=False))
 
