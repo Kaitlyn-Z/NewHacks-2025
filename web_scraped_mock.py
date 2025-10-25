@@ -1,4 +1,9 @@
 # web_scraped_mock.py --> FROM CHATGPT 
+
+# Note: Web-scrape from Reddit using BeautifulSoup in actual web_scraped.py
+# Reddit API?
+# In addition to data below, we want *MENTIONS* (for Dashboard display later, in React)
+
 # Mock data generator to test your volume & RSI analysis code
 # ------------------------------------------------------------
 
@@ -12,7 +17,7 @@ from datetime import datetime, timedelta
 target_tickers = ['AAPL', 'MSFT', 'NVDA', 'AMZN', 'TSLA']
 
 # ----------------------------------------------------------------------
-# 2. Mock stock data generator # USE THIS FOR *actual* web_scraped.py
+# 2. Mock stock data generator # USE THIS FOR *actual* web_scraped.py *
 # ----------------------------------------------------------------------
 def stock_data(ticker: str) -> pd.DataFrame:
     """

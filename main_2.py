@@ -55,8 +55,28 @@ data['RSI'] = data.groupby('Ticker')['Close'].transform(
 #rsi_values = rsi_indicator.rsi()
 #data['RSI_50'] = rsi_values
 
-# CHATGPT SUGGESTION (to display a table / dashboard of results for *testing purposes*):
+# GENERATED SUGGESTION (to display a table / dashboard of results for *testing purposes*):
 latest = data.groupby('Ticker').tail(1)[['Ticker', 'Volume', 'volume_z', 'Volume_Alert', 'RSI']]
 print("\n=== Latest Volume and RSI Alerts ===")
 print(latest.sort_values('volume_z', ascending=False).to_string(index=False))
+
+# --> What other information would be useful to display on dashboard?
+# Consult the website design mockup.
+
+# POSSIBLE RECOMMENDATION SYSTEM:
+
+# If RSI < 30 and Volume_Alert is Medium or High Alert:
+#     Recommend "Potential Buy Opportunity"
+# If RSI > 70 and Volume_Alert is Medium or High Alert:
+#     Recommend "Potential Sell Opportunity"
+
+# Is this legal though ...
+
+
+# EMAIL NOTIFICATION SYSTEM
+
+# User will have option to subscribe to emails for each category of alerts
+# (e.g., only High Alert, Medium and High Alert, etc.)
+
+# Create an email notification system.
 
