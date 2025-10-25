@@ -1,4 +1,4 @@
-# web_scraped_mock.py --> FROM CHATGPT 
+# web_scraped_mock.py --> GENERATED FOR TESTING PURPOSES
 
 # Note: Web-scrape from Reddit using BeautifulSoup in actual web_scraped.py
 # Reddit API?
