@@ -33,7 +33,7 @@ def init_db():
         """)
 init_db()
 
-# Auto-generates a databse (file in directory is alerts.db) to store user preferences for email alerts.
+# Auto-generates a database (file in directory is alerts.db) to store user preferences for email alerts.
 
 @app.post("/preferences") # (Dropdown menu? Or separate url path?) 
 async def save_preferences(pref: UserPreference): # Tells FastAPI what to do when a POST request is recieved
