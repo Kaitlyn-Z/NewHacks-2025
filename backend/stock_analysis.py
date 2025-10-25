@@ -97,18 +97,26 @@ with sqlite3.connect("backend/alerts.db") as conn:
 existing_tickers = set(existing_alerts['Ticker']) if not existing_alerts.empty else set()
 
 # ---------------------------------------------------------------------
-# STEP 5: Update active alerts
+# STEP 5: Update active alerts using Volume_Ratio
 # ---------------------------------------------------------------------
-VOLUME_TOLERANCE = 1.5  # stays active while current volume >= 1.5 * trigger volume
+VOLUME_TOLERANCE = 1.5  # minimum ratio to keep alert active
 newly_added = []
 
 with sqlite3.connect("backend/alerts.db") as conn:
+    # Load existing alerts
+    existing_alerts = pd.read_sql_query("SELECT * FROM active_alerts", conn)
+    existing_tickers = set(existing_alerts['Ticker']) if not existing_alerts.empty else set()
+
     # Remove alerts that dropped below tolerance
     for _, row in existing_alerts.iterrows():
         ticker_data = active_alerts_new[active_alerts_new['Ticker'] == row['Ticker']]
         if ticker_data.empty:
-            current_vol = data[data['Ticker']==row['Ticker']].iloc[-1]['Volume']
-            if current_vol < row['Trigger_Volume'] * VOLUME_TOLERANCE:
+            # Get latest volume for this ticker
+            current_vol = data[data['Ticker'] == row['Ticker']].iloc[-1]['Volume']
+            # Get average volume (50-day rolling)
+            mean_vol = data[data['Ticker'] == row['Ticker']]['Volume'].tail(50).mean()
+            vol_ratio = current_vol / mean_vol if mean_vol > 0 else 0
+            if vol_ratio < VOLUME_TOLERANCE:
                 conn.execute("DELETE FROM active_alerts WHERE Ticker=?", (row['Ticker'],))
 
     # Add/update new alerts
@@ -118,7 +126,7 @@ with sqlite3.connect("backend/alerts.db") as conn:
         conn.execute("""
             REPLACE INTO active_alerts (Ticker, Alert_Level, Trigger_Volume, Timestamp)
             VALUES (?, ?, ?, ?)
-        """, (row['Ticker'], row['Volume_Alert'], row['Trigger_Volume'], row['Timestamp']))
+        """, (row['Ticker'], row['Volume_Alert'], row['Volume'], row['Timestamp']))
 
 # ---------------------------------------------------------------------
 # STEP 6: Send emails for newly added alerts only
