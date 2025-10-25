@@ -1,6 +1,7 @@
 # FastAPI backend
 
 from fastapi import FastAPI, Request
+from active_model import predict_confidence, load_active_alerts
 from fastapi.middleware.cors import CORSMiddleware # to allow requests from React frontend
 from pydantic import BaseModel
 import sqlite3
@@ -44,31 +45,6 @@ async def save_preferences(pref: UserPreference): # Tells FastAPI what to do whe
         # (Stores email + selected alert levels)
     return {"status": "ok", "message": f"Preferences saved for {pref.email}"} # Confirms to frontend that user preferences are saved
 
-@app.post("/update-preferences")
-async def update_preferences(data: dict):
-    """Save user alert preferences from frontend (new format)"""
-    email = data.get('email')
-    preferences = data.get('preferences', {})
-    
-    if not email:
-        return {"status": "error", "message": "Email is required"}
-    
-    # Convert frontend preferences (high/medium/low booleans) to backend format
-    alert_list = []
-    if preferences.get('high', False):
-        alert_list.append('High Alert')
-    if preferences.get('medium', False):
-        alert_list.append('Medium Alert')
-    if preferences.get('low', False):
-        alert_list.append('Low Alert')
-    
-    alerts_str = ",".join(alert_list)
-    
-    with sqlite3.connect("backend/alerts.db") as conn:
-        conn.execute("REPLACE INTO user_prefs (email, alerts) VALUES (?, ?)", (email, alerts_str))
-    
-    return {"status": "ok", "message": f"Preferences saved for {email}", "saved_alerts": alerts_str}
-
 @app.get("/preferences/{email}") # GET request to retrieve user preferences based on email
 async def get_preferences(email: str):
     with sqlite3.connect("backend/alerts.db") as conn:
@@ -81,34 +57,12 @@ async def get_preferences(email: str):
 @app.get("/latest-alerts") # Uses latest_alerts table in alerts.db
 async def latest_alerts():
     conn = sqlite3.connect("backend/alerts.db")
-    rows = conn.execute("""
-        SELECT Ticker, Close, Volume, volume_z, Volume_Ratio, Volume_Alert, RSI, 
-               Price_Change, Sentiment_Score, Mention_Count, Timestamp 
-        FROM latest_alerts
-    """).fetchall()
+    rows = conn.execute("SELECT Ticker, Close, Volume, volume_z, Volume_Ratio, Volume_Alert, RSI, Timestamp FROM latest_alerts").fetchall()
     conn.close()
-    
-    # Map priority names for frontend
-    def map_priority(alert_level):
-        if 'High' in alert_level:
-            return 'high'
-        elif 'Medium' in alert_level:
-            return 'medium'
-        elif 'Low' in alert_level:
-            return 'low'
-        return 'normal'
-    
-    # Return data in format matching frontend StockAlert interface
-    return [{
-        "id": f"{r[0]}-{r[10]}",  # Ticker-Timestamp as ID
-        "ticker": r[0],
-        "currentPrice": round(r[1], 2) if r[1] else 0,
-        "mentionCount": r[9] if r[9] else 0,
-        "volumeRatio": round(r[4], 2) if r[4] else 1.0,
-        "priceChange": round(r[7], 2) if r[7] else 0,
-        "detectedAt": r[10] if r[10] else "",
-        "priority": map_priority(r[5]),
-        "volumeZScore": round(r[3], 2) if r[3] else 0,
-        "rsi": round(r[6], 2) if r[6] else 50,
-        "sentimentScore": round(r[8], 2) if r[8] else 0
-    } for r in rows]
+    return [{"Ticker": r[0], "Close": r[1], "Volume": r[2], "volume_z": r[3], "Volume_Ratio": r[4], "Volume_Alert": r[5], "RSI": r[6], "Timestamp": r[7]} for r in rows]
+
+@app.get("/confidence")
+async def get_confidence():
+    df = load_active_alerts()
+    df_conf = predict_confidence(df)
+    return df_conf.to_dict(orient="records")
