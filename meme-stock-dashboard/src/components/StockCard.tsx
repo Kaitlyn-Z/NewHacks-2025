@@ -173,7 +173,7 @@ const StockCard: React.FC<StockCardProps> = ({ alert }) => {
       </button>
 
       {showChart && (
-        <div className="mt-4">
+        <div className="mt-4 relative z-10 mb-2">
           <VolumeChart data={generateVolumeData()} ticker={alert.ticker} />
         </div>
       )}
