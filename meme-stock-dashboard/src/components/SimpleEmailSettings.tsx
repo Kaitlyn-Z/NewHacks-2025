@@ -42,7 +42,17 @@ const SimpleEmailSettingsModal: React.FC<SimpleEmailSettingsProps> = ({ isOpen, 
     setTestResult(null);
 
     try {
-      // First, save the preferences to the backend
+      // First, save the preferences to the FastAPI backend (database)
+      await fetch('http://localhost:8000/update-preferences', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email,
+          preferences: alertPreferences,
+        }),
+      });
+
+      // Also save to the email service backend (in-memory)
       await fetch('http://localhost:5002/api/email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
