@@ -3,7 +3,7 @@ import schedule
 import subprocess
 
 def run_scraper():
-    subprocess.run(["python", "backend/main_2.py"], check=True)
+    subprocess.run(["python", "backend/stock_analysis.py"], check=True)
 
 schedule.every(30).minutes.do(run_scraper)
 
