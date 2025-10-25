@@ -1,4 +1,4 @@
-# Meme Stock Alert Dashboard
+# Meme Stock Watchlist
 
 A real-time stock monitoring system that combines **volume analysis**, **social sentiment analysis**, and **email notifications** to detect potential meme stock momentum.
 
