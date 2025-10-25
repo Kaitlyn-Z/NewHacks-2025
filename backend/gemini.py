@@ -81,8 +81,8 @@ def parse_gemini_csv_response(raw_text):
 def generate_gemini_sentiment_analysis(posts):
     prompt = f"""
     Analyze the sentiment for each of the following social media posts.
-    Return these as a string with csv format. Include headers "ticker", "sentiment", and "sentiment_score" (-1 to +1).
-
+    Return these as a string with csv format. Include headers "ticker", "sentiment", and "sentiment_score".
+    Sentiment score is a float ranging between -1 (negative sentiment) to +1 (positive sentiment).
     Posts:
     {posts}
     """
