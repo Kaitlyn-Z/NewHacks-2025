@@ -26,6 +26,8 @@ class EmailService:
             'use_tls': True
         }
         self.default_recipient = 'liyunzi0902@gmail.com'  # Default recipient
+        # Store user preferences (email -> preferences mapping)
+        self.user_preferences = {}  # Format: {email: {'high': True, 'medium': True, 'low': False}}
     
     def create_email_template(self, alert_data):
         """Create beautiful HTML email template"""
@@ -193,6 +195,30 @@ class EmailService:
             return True, "SMTP connection successful"
         except Exception as e:
             return False, str(e)
+    
+    def save_preferences(self, email, preferences):
+        """Save user alert preferences"""
+        self.user_preferences[email] = preferences
+        logger.info(f"Saved preferences for {email}: {preferences}")
+        return True
+    
+    def should_send_alert(self, email, alert_priority):
+        """Check if alert should be sent based on user preferences"""
+        # If no preferences saved for this email, send all alerts (default behavior)
+        if email not in self.user_preferences:
+            return True
+        
+        preferences = self.user_preferences[email]
+        
+        # Check if the alert priority matches user preferences
+        if alert_priority == 'high' and preferences.get('high', False):
+            return True
+        elif alert_priority == 'medium' and preferences.get('medium', False):
+            return True
+        elif alert_priority == 'low' and preferences.get('low', False):
+            return True
+        
+        return False
 
 # Initialize email service
 email_service = EmailService()
@@ -211,6 +237,16 @@ def handle_email():
             if not to_email:
                 return jsonify({'success': False, 'message': 'Email address required'}), 400
             
+            # Check if alert should be sent based on user preferences
+            alert_priority = alert_data.get('priority', 'low')
+            if not email_service.should_send_alert(to_email, alert_priority):
+                logger.info(f"Skipping alert for {to_email} - priority {alert_priority} not in preferences")
+                return jsonify({
+                    'success': True, 
+                    'message': f'Alert skipped based on user preferences (priority: {alert_priority})',
+                    'skipped': True
+                })
+            
             success, message = email_service.send_email(to_email, alert_data)
             return jsonify({'success': success, 'message': message})
         
@@ -224,6 +260,21 @@ def handle_email():
             if settings and settings.get('email'):
                 email_service.default_recipient = settings.get('email')
             return jsonify({'success': True, 'message': 'Email settings updated successfully'})
+        
+        elif action == 'update-preferences':
+            # Save user alert preferences
+            email = data.get('email')
+            preferences = data.get('preferences', {})
+            
+            if not email:
+                return jsonify({'success': False, 'message': 'Email address required'}), 400
+            
+            email_service.save_preferences(email, preferences)
+            return jsonify({
+                'success': True, 
+                'message': 'Alert preferences saved successfully',
+                'preferences': preferences
+            })
         
         else:
             return jsonify({'success': False, 'message': 'Invalid action'}), 400

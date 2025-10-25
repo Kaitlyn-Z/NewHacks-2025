@@ -11,12 +11,19 @@ export interface EmailNotification {
   emailSent: boolean;
 }
 
+export interface AlertPreferences {
+  high: boolean;
+  medium: boolean;
+  low: boolean;
+}
+
 export interface EmailSettings {
   enabled: boolean;
   email: string;
   highPriorityOnly: boolean;
   mediumPriorityOnly: boolean;
   lowPriorityOnly: boolean;
+  preferences?: AlertPreferences;  // New: modern preference system
   smtpConfig: {
     host: string;
     port: number;

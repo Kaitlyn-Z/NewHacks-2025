@@ -98,11 +98,11 @@ const StockCard: React.FC<StockCardProps> = ({ alert }) => {
         <div className="bg-gray-50 rounded-lg p-3">
           <div className="text-sm font-medium text-gray-600 mb-1">Status</div>
           <div className={`text-sm font-bold ${
-            alert.volumeRatio > 3 ? 'text-red-600' : 
-            alert.volumeRatio > 2 ? 'text-yellow-600' : 'text-green-600'
+            alert.priority === 'high' ? 'text-red-600' : 
+            alert.priority === 'medium' ? 'text-yellow-600' : 'text-green-600'
           }`}>
-            {alert.volumeRatio > 3 ? 'High Alert' : 
-             alert.volumeRatio > 2 ? 'Medium Alert' : 'Low Alert'}
+            {alert.priority === 'high' ? 'High Alert' : 
+             alert.priority === 'medium' ? 'Medium Alert' : 'Low Alert'}
           </div>
         </div>
       </div>

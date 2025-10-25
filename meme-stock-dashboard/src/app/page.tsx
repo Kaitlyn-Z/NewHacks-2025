@@ -6,7 +6,7 @@ import { StockAlert } from '@/types';
 import { EmailSettings } from '@/types/email';
 import { mockStockAlerts, generateRandomAlert } from '@/data/mockData';
 import StockCard from '@/components/StockCard';
-import SimpleEmailSettingsModal from '@/components/SimpleEmailSettings';
+import SimpleEmailSettingsModal, { AlertPreferences } from '@/components/SimpleEmailSettings';
 
 export default function Dashboard() {
   const [alerts, setAlerts] = useState<StockAlert[]>(mockStockAlerts);
@@ -18,6 +18,11 @@ export default function Dashboard() {
   const [emailEnabled, setEmailEnabled] = useState(false);
   const [showEmailSettings, setShowEmailSettings] = useState(false);
   const [emailNotifications, setEmailNotifications] = useState<{ sent: number; failed: number }>({ sent: 0, failed: 0 });
+  const [alertPreferences, setAlertPreferences] = useState<AlertPreferences>({
+    high: true,
+    medium: true,
+    low: false
+  });
 
   const sendEmailNotification = async (alert: StockAlert) => {
     if (!emailEnabled || !userEmail) return;
@@ -59,14 +64,21 @@ export default function Dashboard() {
         const previousAlerts = alerts;
         setAlerts(data.alerts);
         
-        // Check for new high-priority alerts and send email notifications
+        // Check for new alerts matching user preferences and send email notifications
         if (emailEnabled && userEmail) {
-          const newHighPriorityAlerts = data.alerts.filter((alert: StockAlert) => 
-            alert.priority === 'high' && 
-            !previousAlerts.some(prev => prev.ticker === alert.ticker && prev.priority === 'high')
+          const shouldSendAlert = (priority: string) => {
+            if (priority === 'high') return alertPreferences.high;
+            if (priority === 'medium') return alertPreferences.medium;
+            if (priority === 'low') return alertPreferences.low;
+            return false;
+          };
+          
+          const newAlerts = data.alerts.filter((alert: StockAlert) => 
+            shouldSendAlert(alert.priority) &&
+            !previousAlerts.some(prev => prev.ticker === alert.ticker && prev.priority === alert.priority)
           );
           
-          for (const alert of newHighPriorityAlerts) {
+          for (const alert of newAlerts) {
             await sendEmailNotification(alert);
           }
         }
@@ -98,6 +110,12 @@ export default function Dashboard() {
       setEmailEnabled(savedEnabled);
     }
     
+    // Load alert preferences from localStorage
+    const savedPreferences = localStorage.getItem('alertPreferences');
+    if (savedPreferences) {
+      setAlertPreferences(JSON.parse(savedPreferences));
+    }
+    
     // Fetch initial data
     fetchAlerts();
   }, []);
@@ -117,11 +135,13 @@ export default function Dashboard() {
     setAutoRefresh(!autoRefresh);
   };
 
-  const handleEmailSave = (email: string) => {
+  const handleEmailSave = (email: string, preferences: AlertPreferences) => {
     setUserEmail(email);
     setEmailEnabled(true);
+    setAlertPreferences(preferences);
     localStorage.setItem('userEmail', email);
     localStorage.setItem('emailEnabled', 'true');
+    localStorage.setItem('alertPreferences', JSON.stringify(preferences));
   };
 
   const getStats = () => {
@@ -156,13 +176,6 @@ export default function Dashboard() {
                 <Clock className="w-4 h-4" />
                 <span>Last updated: {mounted ? lastUpdated.toLocaleTimeString() : '--:--:--'}</span>
               </div>
-              
-              {emailEnabled && userEmail && (
-                <div className="flex items-center space-x-2 text-sm text-gray-600">
-                  <Mail className="w-4 h-4" />
-                  <span>Emails: {emailNotifications.sent} sent, {emailNotifications.failed} failed</span>
-                </div>
-              )}
               
               <button
                 onClick={toggleAutoRefresh}

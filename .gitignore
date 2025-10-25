@@ -1,8 +1,11 @@
+<<<<<<< Updated upstream
 # API Keys and Secrets
 backend/api_keys.py
 .env
 *.env
 
+=======
+>>>>>>> Stashed changes
 # Python
 __pycache__/
 *.py[cod]
@@ -21,24 +24,18 @@ parts/
 sdist/
 var/
 wheels/
+pip-wheel-metadata/
+share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+PYTHONPATH
 
-# Virtual Environments
+# Virtual Environment
 venv/
 env/
 ENV/
 .venv
-
-# Logs
-logs/
-*.log
-
-# Next.js
-meme-stock-dashboard/.next/
-meme-stock-dashboard/out/
-meme-stock-dashboard/node_modules/
 
 # IDEs
 .vscode/
@@ -48,15 +45,32 @@ meme-stock-dashboard/node_modules/
 *~
 .DS_Store
 
-# Testing
-.pytest_cache/
-.coverage
-htmlcov/
-
-# Jupyter Notebooks
-.ipynb_checkpoints
+# Logs
+logs/*.log
+*.log
 
 # Database
 *.db
 *.sqlite
 *.sqlite3
+
+# API Keys
+api_keys.py
+.env
+.env.local
+
+# Node
+node_modules/
+.next/
+out/
+build/
+dist/
+
+# Testing
+.coverage
+.pytest_cache/
+htmlcov/
+
+# OS
+.DS_Store
+Thumbs.db
