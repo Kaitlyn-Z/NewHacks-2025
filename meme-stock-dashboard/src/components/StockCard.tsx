@@ -105,7 +105,7 @@ const StockCard: React.FC<StockCardProps> = ({ alert }) => {
             <span className="text-sm font-medium">RSI</span>
           </div>
           <div className={`text-xl font-bold ${getRSIColor(alert.rsi)}`}>
-            {alert.rsi ? alert.rsi.toFixed(1) : 'N/A'}
+            {alert.rsi !== undefined && alert.rsi !== null ? alert.rsi.toFixed(1) : 'N/A'}
           </div>
         </div>
         
@@ -115,7 +115,7 @@ const StockCard: React.FC<StockCardProps> = ({ alert }) => {
             <span className="text-sm font-medium">Vol Z-Score</span>
           </div>
           <div className="text-xl font-bold text-gray-900">
-            {alert.volumeZScore ? alert.volumeZScore.toFixed(2) : 'N/A'}
+            {alert.volumeZScore !== undefined && alert.volumeZScore !== null ? alert.volumeZScore.toFixed(2) : 'N/A'}
           </div>
         </div>
         
@@ -125,7 +125,7 @@ const StockCard: React.FC<StockCardProps> = ({ alert }) => {
             <span className="text-sm font-medium">Sentiment</span>
           </div>
           <div className={`text-xl font-bold ${getSentimentColor(alert.sentimentScore)}`}>
-            {alert.sentimentScore ? alert.sentimentScore.toFixed(2) : 'N/A'}
+            {alert.sentimentScore !== undefined && alert.sentimentScore !== null ? alert.sentimentScore.toFixed(2) : 'N/A'}
           </div>
         </div>
         

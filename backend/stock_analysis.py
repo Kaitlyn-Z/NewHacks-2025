@@ -2,6 +2,11 @@
 # in seperate file web_scraped.py
 
 ##import web_scraped_mock as ws # FOR web_scraped.py, this will re-run the web scraping / update with latest data
+import sys
+import os
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from backend.web_scraped_mock import target_tickers, stock_data #, mentions --> then we can implement that here
 import pandas as pd
 import ta
@@ -54,8 +59,12 @@ data['Price_Change'] = data['Price_Change'].fillna(0)
 # Generate sentiment scores (mock for now - will be replaced by actual scraping)
 def generate_mock_sentiment(ticker):
     """Generate mock sentiment score based on ticker hash for consistency"""
-    np.random.seed(hash(ticker) % (2**32 - 1))
-    return round(np.random.uniform(-1, 1), 2)
+    # Use ticker hash for consistent results per ticker
+    seed = hash(ticker) % (2**32 - 1)
+    np.random.seed(seed)
+    # Generate sentiment with bias towards neutral-to-positive for popular stocks
+    sentiment = np.random.triangular(-0.8, 0.2, 0.9)
+    return round(sentiment, 2)
 
 # Generate mention count (mock for now)
 def generate_mock_mentions(volume_ratio):
