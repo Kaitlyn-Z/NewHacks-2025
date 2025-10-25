@@ -1,9 +1,5 @@
 """
 Meme Stock Radar: Gemini Sentiment Analysis + Volume Analysis
-
-Requirements:
-pip install yfinance pandas google-generativeai
-pip install -q -U google-genai
 """
 import yfinance as yf
 import pandas as pd
