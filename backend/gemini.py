@@ -10,19 +10,16 @@ import pandas as pd
 import google.generativeai as genai
 import api_keys
 
+# TODO: set up gemini so the cutoff date doesn't impact it as much (we want recent data)
+# - grounding with Google Search
+# - change cutoff date if poss.
+
 # Configure Gemini
 genai.configure(api_key=api_keys.GEMINI_API_KEY)
 
 # Configuration
 TICKERS = ["TSLA", "NVDA"]
 LOOKBACK_DAYS = 3
-
-# Example posts for testing sentiment analysis
-test_posts = [
-    "TSLA is mooning, everyone's buying calls! 🚀🚀",
-    "TSLA prices predicted to rise!",
-    "NVDA might drop soon, too overpriced."
-]
 
 # Fetch stock data
 def fetch_stock_data(tickers, days=5):
@@ -114,12 +111,20 @@ def generate_gemini_summary(combined_df):
 if __name__ == "__main__":
     print("Running Gemini Meme Stock Radar...")
 
+    # TODO: Replace with actual post data later
+    test_reddit_posts = [
+        "TSLA is mooning, everyone’s buying calls! 🚀🚀",
+        "TSLA prices predicted to rise!",
+        "NVDA might drop soon, too overpriced."
+    ]
+
+
     # Generate momentum data w/yfinance
     momentum_df = fetch_stock_data(TICKERS, LOOKBACK_DAYS)
 
     # Sentiment analysis (Gemini)
     model = genai.GenerativeModel("gemini-2.0-flash-exp")
-    sentiment_df = generate_gemini_sentiment_analysis(test_posts)
+    sentiment_df = generate_gemini_sentiment_analysis(test_reddit_posts)
 
     # COMBINE SENTIMENT + MOMENTUM
     if not sentiment_df.empty:

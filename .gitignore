@@ -1,5 +1,5 @@
 # API Keys and Secrets
-api_keys.py
+backend/api_keys.py
 .env
 *.env
 
