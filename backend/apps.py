@@ -4,7 +4,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware # to allow requests from React frontend
 from pydantic import BaseModel
 import sqlite3
-from backend.notifier import send_alert_email
+# from backend.notifier import send_alert_email: Is this needed?
 import pandas as pd
 
 app = FastAPI()
@@ -56,6 +56,6 @@ async def get_preferences(email: str):
 @app.get("/latest-alerts") # Uses latest_alerts table in alerts.db
 async def latest_alerts():
     conn = sqlite3.connect("backend/alerts.db")
-    rows = conn.execute("SELECT Ticker, Volume_Alert, volume_z, RSI FROM latest_alerts").fetchall()
+    rows = conn.execute("SELECT Ticker, Close, Volume, volume_z, Volume_Ratio, Volume_Alert, RSI, Timestamp FROM latest_alerts").fetchall()
     conn.close()
-    return [{"Ticker": r[0], "Volume_Alert": r[1], "volume_z": r[2], "RSI": r[3]} for r in rows]
+    return [{"Ticker": r[0], "Close": r[1], "Volume": r[2], "volume_z": r[3], "Volume_Ratio": r[4], "Volume_Alert": r[5], "RSI": r[6], "Timestamp": r[7]} for r in rows]
