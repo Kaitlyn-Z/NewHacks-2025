@@ -1,11 +1,8 @@
-<<<<<<< Updated upstream
 # API Keys and Secrets
 backend/api_keys.py
 .env
 *.env
 
-=======
->>>>>>> Stashed changes
 # Python
 __pycache__/
 *.py[cod]

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, TrendingDown, MessageSquare, BarChart3, Clock, Lightbulb } from 'lucide-react';
+import { TrendingUp, TrendingDown, MessageSquare, BarChart3, Clock, Lightbulb, Activity, Gauge, Smile } from 'lucide-react';
 import { StockCardProps } from '@/types';
 import AlertBadge from './AlertBadge';
 import VolumeChart from './VolumeChart';
@@ -24,6 +24,20 @@ const StockCard: React.FC<StockCardProps> = ({ alert }) => {
   const formatTime = (timestamp: string) => {
     if (!mounted) return 'Loading...';
     return new Date(timestamp).toLocaleString();
+  };
+
+  const getRSIColor = (rsi: number | undefined) => {
+    if (!rsi) return 'text-gray-600';
+    if (rsi >= 70) return 'text-red-600';  // Overbought
+    if (rsi <= 30) return 'text-green-600';  // Oversold
+    return 'text-blue-600';  // Neutral
+  };
+
+  const getSentimentColor = (score: number | undefined) => {
+    if (!score) return 'text-gray-600';
+    if (score >= 0.5) return 'text-green-600';  // Bullish
+    if (score <= -0.5) return 'text-red-600';  // Bearish
+    return 'text-yellow-600';  // Neutral
   };
 
   // Generate mock volume data for the chart
@@ -83,6 +97,36 @@ const StockCard: React.FC<StockCardProps> = ({ alert }) => {
             <span className="text-sm font-medium">Volume Ratio</span>
           </div>
           <div className="text-xl font-bold text-gray-900">{alert.volumeRatio.toFixed(2)}x</div>
+        </div>
+        
+        <div className="bg-gray-50 rounded-lg p-3">
+          <div className="flex items-center text-gray-600 mb-1">
+            <Gauge className="w-4 h-4 mr-2" />
+            <span className="text-sm font-medium">RSI</span>
+          </div>
+          <div className={`text-xl font-bold ${getRSIColor(alert.rsi)}`}>
+            {alert.rsi ? alert.rsi.toFixed(1) : 'N/A'}
+          </div>
+        </div>
+        
+        <div className="bg-gray-50 rounded-lg p-3">
+          <div className="flex items-center text-gray-600 mb-1">
+            <Activity className="w-4 h-4 mr-2" />
+            <span className="text-sm font-medium">Vol Z-Score</span>
+          </div>
+          <div className="text-xl font-bold text-gray-900">
+            {alert.volumeZScore ? alert.volumeZScore.toFixed(2) : 'N/A'}
+          </div>
+        </div>
+        
+        <div className="bg-gray-50 rounded-lg p-3">
+          <div className="flex items-center text-gray-600 mb-1">
+            <Smile className="w-4 h-4 mr-2" />
+            <span className="text-sm font-medium">Sentiment</span>
+          </div>
+          <div className={`text-xl font-bold ${getSentimentColor(alert.sentimentScore)}`}>
+            {alert.sentimentScore ? alert.sentimentScore.toFixed(2) : 'N/A'}
+          </div>
         </div>
         
         <div className="bg-gray-50 rounded-lg p-3">

@@ -7,6 +7,9 @@ export interface StockAlert {
   priceChange: number;
   detectedAt: string;
   priority: 'high' | 'medium' | 'low';
+  sentimentScore?: number;
+  volumeZScore?: number;
+  rsi?: number;
   advice?: string;
 }
 
