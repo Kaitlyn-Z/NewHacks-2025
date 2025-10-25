@@ -1,8 +1,7 @@
 # data web-scraped with beautiful soup
 # in seperate file web_scraped.py
 
-#import web_scraped.py as ws # temporary name
-#from ws import target_stickers, stock_data # anything else needed?
+##import web_scraped_mock as ws # FOR web_scraped.py, this will re-run the web scraping / update with latest data
 from web_scraped_mock import target_tickers, stock_data
 import pandas as pd
 import ta
@@ -46,37 +45,55 @@ rsi_window = 14 # typical window for RSI calculation
 data['RSI'] = data.groupby('Ticker')['Close'].transform(
     lambda x: ta.momentum.RSIIndicator(close=x, window=rsi_window).rsi()) 
 
-# from ChatGPT suggestion --> need 'Close' data too from web scraping.
-
-# import yahoo finance as yf 
-# [see if this would allow us to obtain the 'Close' data for our target stocks]
-
-#rsi_indicator = ta.momentum.RSIIndicator(close=close_prices, window=50) # should window be 50 or 14?
-#rsi_values = rsi_indicator.rsi()
-#data['RSI_50'] = rsi_values
-
 # GENERATED SUGGESTION (to display a table / dashboard of results for *testing purposes*):
 latest = data.groupby('Ticker').tail(1)[['Ticker', 'Volume', 'volume_z', 'Volume_Alert', 'RSI']]
 print("\n=== Latest Volume and RSI Alerts ===")
 print(latest.sort_values('volume_z', ascending=False).to_string(index=False))
 
-# --> What other information would be useful to display on dashboard?
-# Consult the website design mockup.
+# Store latest alerts in the database in the backend
+# --> backend/alerts.db will store user emails + preferences + latest alerts
 
-# POSSIBLE RECOMMENDATION SYSTEM:
+with sqlite3.connect("backend/alerts.db") as conn: # Crea
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS latest_alerts (
+            Ticker TEXT,
+            Volume_Alert TEXT,
+            volume_z REAL,
+            RSI REAL
+        )
+    """)
+    # Clear old alerts
+    conn.execute("DELETE FROM latest_alerts")
+    # Insert new alerts
+    for _, row in latest.iterrows():
+        conn.execute(
+            "INSERT INTO latest_alerts (Ticker, Volume_Alert, volume_z, RSI) VALUES (?, ?, ?, ?)",
+            (row['Ticker'], row['Volume_Alert'], row['volume_z'], row['RSI'])
+        )
 
-# If RSI < 30 and Volume_Alert is Medium or High Alert:
-#     Recommend "Potential Buy Opportunity"
-# If RSI > 70 and Volume_Alert is Medium or High Alert:
-#     Recommend "Potential Sell Opportunity"
+# Sends email alerts to users based on their preferences and latest analysis results
 
-# Is this legal though ...
+import sqlite3
+from backend.notifier import send_alert_email
 
+# After generating 'latest' DataFrame
+with sqlite3.connect("backend/alerts.db") as conn:
+    users = conn.execute("SELECT email, alerts FROM user_prefs").fetchall()
 
-# EMAIL NOTIFICATION SYSTEM
+for email, alerts_str in users:
+    alert_list = alerts_str.split(",")
 
-# User will have option to subscribe to emails for each category of alerts
-# (e.g., only High Alert, Medium and High Alert, etc.)
+    # Filter alerts that match user's preferences
+    user_alerts = latest[latest['Volume_Alert'].isin(alert_list)]
 
-# Create an email notification system.
+    for _, row in user_alerts.iterrows():
+        send_alert_email(
+            to_email=email,
+            ticker=row['Ticker'],
+            alert=row['Volume_Alert'],
+            volume_z=row['volume_z'],
+            rsi=row['RSI']
+        )
+
+# Note: In actual implementation, ensure to handle email sending limits and avoid spamming users.
 

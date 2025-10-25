@@ -1,6 +1,6 @@
 # Email sending logic 
 
-# Create a GMAIL account just for this project (see Google Docs for Email and Password)
+# Created a GMAIL account just for this project (see Google Docs for Email and Password)
 
 import os
 from dotenv import load_dotenv
@@ -37,3 +37,4 @@ def send_alert_email(to_email: str, ticker: str, alert: str, volume: int, rsi: f
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
         smtp.login(EMAIL_USER, EMAIL_PASS) # CREATE AN EMAIL JUST FOR THIS PROJECT
         smtp.send_message(msg)
+
