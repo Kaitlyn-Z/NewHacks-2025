@@ -2,7 +2,10 @@
 Meme Stock Radar: Reddit + Momentum + Gemini
 
 Requirements:
-pip install yfinance pandas google-generativeai praw
+pip install yfinance 
+pip instsall pandas
+pip install google-generativeai
+pip install praw
 pip install -q -U google-genai
 """
 # TODO: remove later
@@ -12,6 +15,10 @@ import pandas as pd
 import google.generativeai as genai
 import api_keys
 
+# TODO: set up gemini so the cutoff date doesn't impact it as much (we want recent data)
+# - grounding with Google Search
+# - change cutoff date if poss.
+
 # Configure Gemini
 genai.configure(api_key=api_keys.GEMINI_API_KEY)
 
@@ -19,13 +26,6 @@ genai.configure(api_key=api_keys.GEMINI_API_KEY)
 # Can edit lookback days depending on what we think works
 TICKERS = ["TSLA", "NVDA"]
 LOOKBACK_DAYS = 3
-
-# TODO: Replace with actual post data later
-test_reddit_posts = [
-    "TSLA is mooning, everyone’s buying calls! 🚀🚀",
-    "TSLA prices predicted to rise!",
-    "NVDA might drop soon, too overpriced."
-]
 
 # Fetch stock data
 # TODO: replace with other code later, delete this function 
@@ -117,6 +117,14 @@ def generate_gemini_summary(combined_df):
 
 if __name__ == "__main__":
     print("Running Gemini Meme Stock Radar...")
+
+    # TODO: Replace with actual post data later
+    test_reddit_posts = [
+        "TSLA is mooning, everyone’s buying calls! 🚀🚀",
+        "TSLA prices predicted to rise!",
+        "NVDA might drop soon, too overpriced."
+    ]
+
 
     # Generate momentum data w/yfinance
     momentum_df = fetch_stock_data(TICKERS, LOOKBACK_DAYS)
