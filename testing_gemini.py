@@ -1,15 +1,42 @@
 """
-Backend module integrating Google Gemini for stock analysis and recommendations
+Meme Stock Radar: Reddit + Momentum + Gemini
+--------------------------------------------
+
+This script:
+1. Fetches stock data from Yahoo Finance (volume)
+2. Analyzes social sentiment (example Reddit posts)
+3. Combines both signals
+4. Uses Gemini to summarize which tickers show meme-like momentum
+
+Requirements:
 """
 
 import os
 import pandas as pd
 import yfinance as yf
-from dotenv import load_dotenv
 from google import genai
 from google.genai import types
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+# Configure Gemini client
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+
+# Global variables
+TICKERS = ["TSLA", "NVDA"]
+LOOKBACK_DAYS = 3
+
+# Example Reddit posts (TODO: replace with real data)
+reddit_posts = [
+    "TSLA is mooning, everyone’s buying calls! 🚀🚀",
+    "TSLA prices predicted to rise!",
+    "NVDA might drop soon, too overpriced."
+]
 
 
+# --- Fetch stock data ---
 def fetch_stock_data(tickers, days=5):
     data = []
     for t in tickers:
@@ -25,10 +52,12 @@ def fetch_stock_data(tickers, days=5):
     return pd.DataFrame(data)
 
 
+# --- Manually parse CSV-like Gemini output ---
 def parse_gemini_csv_manual(raw_text):
     raw_text = raw_text.strip()
     lines = raw_text.splitlines()
 
+    # Find header line
     start_idx = None
     for i, line in enumerate(lines):
         if line.strip().startswith("ticker,sentiment,sentiment_score"):
@@ -36,7 +65,7 @@ def parse_gemini_csv_manual(raw_text):
             break
 
     if start_idx is None:
-        print("No valid header found in Gemini output")
+        print("⚠️ No valid header found in Gemini output")
         return pd.DataFrame(columns=["ticker", "sentiment", "sentiment_score"])
 
     data = []
@@ -60,66 +89,46 @@ def parse_gemini_csv_manual(raw_text):
     return pd.DataFrame(data)
 
 
-def analyze_sentiment(client, posts):
+def analyze_sentiment(posts):
+    """Uses Gemini to generate sentiment CSV for each ticker."""
     prompt = f"""
-    Analyze the sentiment for each of the Reddit posts in the dataframe.
-    Return the results as CSV text with headers: ticker, sentiment, sentiment_score (-1 to +1).
-
+    Analyze the sentiment for each of the following Reddit posts.
+    Return results as CSV text with headers: ticker,sentiment,sentiment_score (-1 to +1).
     Posts:
     {posts}
     """
 
     response = client.models.generate_content(
-        model="gemini-2.5-pro",
-        contents=prompt,
-        config=types.GenerateContentConfig(
-            tools=[types.Tool(google_search=types.GoogleSearch())]
-        )
+        model="gemini-2.0-flash",
+        contents=prompt
     )
 
+    print("🧠 Raw Gemini Output:\n", response.text, "\n")
     return parse_gemini_csv_manual(response.text)
 
-def summarize_market(client, df):
+
+def summarize_market(df):
+    """Summarizes combined momentum and sentiment data."""
     summary_prompt = f"""
     You are an AI financial analyst.
     Given this data combining volume ratio and sentiment score:
     {df.to_string(index=False)}
 
-    Use real market data from the web if needed.
     Explain which stocks have the strongest meme-like momentum (high volume + positive sentiment).
     Keep the summary under 50 words.
     """
 
     response = client.models.generate_content(
-        model="gemini-2.5-pro",
-        contents=summary_prompt,
-        config=types.GenerateContentConfig(
-            tools=[types.Tool(google_search=types.GoogleSearch())],
-        )
+        model="gemini-2.0-flash",
+        contents=summary_prompt
     )
 
     return response.text
 
 
 def main():
-    # Load environment variables
-    load_dotenv()
-
-    # Configure Gemini client
-    client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
-
-    tickers = ["TSLA", "NVDA"]
-    lookback_days = 3
-
-    # Example Reddit posts (replace later with real scraped data)
-    reddit_posts = [
-        "TSLA is mooning, everyone’s buying calls! 🚀🚀",
-        "TSLA prices predicted to rise!",
-        "NVDA might drop soon, too overpriced."
-    ]
-
-    momentum_df = fetch_stock_data(tickers, lookback_days)
-    sentiment_df = analyze_sentiment(client, reddit_posts)
+    momentum_df = fetch_stock_data(TICKERS, LOOKBACK_DAYS)
+    sentiment_df = analyze_sentiment(reddit_posts)
 
     if not sentiment_df.empty:
         avg_sentiment = sentiment_df.groupby("ticker")["sentiment_score"].mean().reset_index()
@@ -130,8 +139,8 @@ def main():
     print("\n📊 Combined Data:")
     print(combined, "\n")
 
-    summary = summarize_market(client, combined)
-    print("📰 Gemini Market Summary:\n")
+    summary = summarize_market(combined)
+    print("📰 Gemini Summary:\n")
     print(summary)
 
 
