@@ -7,9 +7,27 @@ The system has 3 main components that need to run simultaneously:
 2. **Backend API** - Serves data to the frontend
 3. **Frontend** - Displays the dashboard
 
-## Quick Start (3 Terminals)
+## Quick Start (4 Terminals)
 
-### Terminal 1: Scheduler (Auto-Refresh Every 30 Minutes)
+### Terminal 1: Email Service (Port 5002)
+```bash
+cd NewHacks-2025/meme-stock-dashboard/python-backend
+python3 app.py
+```
+
+**What it does:**
+- ✅ Runs email service on port 5002
+- ✅ Handles test emails from frontend
+- ✅ Stores user preferences in memory
+- ✅ Pre-configured with Gmail SMTP
+
+**You should see:**
+```
+INFO:__main__:Starting Email Service on port 5002
+ * Running on http://0.0.0.0:5002
+```
+
+### Terminal 2: Scheduler (Auto-Refresh Every 30 Minutes)
 ```bash
 cd NewHacks-2025
 python3 backend/scheduler.py
@@ -30,7 +48,7 @@ INFO:__main__:Stock analysis completed successfully
 INFO:__main__:Scheduler started. Running every 30 minutes...
 ```
 
-### Terminal 2: Backend API
+### Terminal 3: Backend API (Port 5001)
 ```bash
 cd NewHacks-2025
 python3 backend/integrated_backend.py
@@ -48,7 +66,7 @@ INFO:integrated_backend:Starting Integrated Backend on port 5001
  * Running on http://0.0.0.0:5001
 ```
 
-### Terminal 3: Frontend
+### Terminal 4: Frontend (Port 3000)
 ```bash
 cd NewHacks-2025/meme-stock-dashboard
 npm run dev
@@ -64,17 +82,18 @@ npm run dev
 ready - started server on 0.0.0.0:3000, url: http://localhost:3000
 ```
 
-## Optional: FastAPI Backend (for User Preferences)
+## Optional: FastAPI Backend (for Database Preferences)
 
-If you want to manage user email preferences:
+If you want to save user preferences to the database (for scheduled emails):
 
-### Terminal 4 (Optional):
+### Terminal 5 (Optional):
 ```bash
 cd NewHacks-2025
 uvicorn backend.apps:app --reload --port 8000
 ```
 
-This is only needed if users are updating their email notification preferences.
+**Note:** The email service (Terminal 1) handles test emails and immediate notifications. 
+The FastAPI backend saves preferences to the database for the scheduler to use.
 
 ## How Auto-Refresh Works
 
