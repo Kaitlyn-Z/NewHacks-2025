@@ -44,7 +44,7 @@ except Exception as e:
 # Configuration
 LOOKBACK_DAYS = 50  # For volume calculations
 SENTIMENT_LOOKBACK = 3  # Days for sentiment analysis
-REFRESH_INTERVAL = 30  # seconds
+REFRESH_INTERVAL = 1800  # seconds (30 minutes - matches scheduler)
 
 # Monitored stock tickers
 TARGET_TICKERS = ["GME", "AMC", "BB", "TSLA", "NVDA", "PLTR", "NOK", "AAPL", "MSFT"]
