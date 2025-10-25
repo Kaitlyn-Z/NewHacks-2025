@@ -56,33 +56,6 @@ async def get_preferences(email: str):
 @app.get("/latest-alerts") # Uses latest_alerts table in alerts.db
 async def latest_alerts():
     conn = sqlite3.connect("backend/alerts.db")
-    rows = conn.execute("""
-        SELECT Ticker, Close, Volume, volume_z, Volume_Ratio, Volume_Alert, RSI, 
-               Price_Change, Sentiment_Score, Mention_Count, Timestamp 
-        FROM latest_alerts
-    """).fetchall()
+    rows = conn.execute("SELECT Ticker, Close, Volume, volume_z, Volume_Ratio, Volume_Alert, RSI, Timestamp FROM latest_alerts").fetchall()
     conn.close()
-    
-    # Map priority names
-    def map_priority(alert_level):
-        if 'High' in alert_level:
-            return 'high'
-        elif 'Medium' in alert_level:
-            return 'medium'
-        elif 'Low' in alert_level:
-            return 'low'
-        return 'normal'
-    
-    return [{
-        "id": f"{r[0]}-{r[10]}",  # Ticker-Timestamp as ID
-        "ticker": r[0],
-        "currentPrice": r[1],
-        "mentionCount": r[9],
-        "volumeRatio": round(r[4], 2),
-        "priceChange": round(r[7], 2) if r[7] else 0,
-        "detectedAt": r[10],
-        "priority": map_priority(r[5]),
-        "volumeZScore": round(r[3], 2) if r[3] else 0,
-        "rsi": round(r[6], 2) if r[6] else 50,
-        "sentimentScore": round(r[8], 2) if r[8] else 0
-    } for r in rows]
+    return [{"Ticker": r[0], "Close": r[1], "Volume": r[2], "volume_z": r[3], "Volume_Ratio": r[4], "Volume_Alert": r[5], "RSI": r[6], "Timestamp": r[7]} for r in rows]
