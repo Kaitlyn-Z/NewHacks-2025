@@ -165,6 +165,27 @@ class VolumeAnalyzer:
             return 1.0
         
         return latest_volume / avg_volume
+    
+    @staticmethod
+    def calculate_rsi(df: pd.DataFrame, period: int = 14) -> pd.DataFrame:
+        """Calculate RSI (Relative Strength Index)"""
+        if df.empty or len(df) < period + 1:
+            df['RSI'] = 50.0  # Neutral RSI if not enough data
+            return df
+        
+        # Calculate price changes
+        delta = df['Close'].diff()
+        
+        # Separate gains and losses
+        gain = (delta.where(delta > 0, 0)).rolling(window=period, min_periods=1).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period, min_periods=1).mean()
+        
+        # Calculate RS and RSI
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        
+        df['RSI'] = rsi.fillna(50.0)  # Fill NaN with neutral value
+        return df
 
 
 class SentimentAnalyzer:
@@ -333,9 +354,93 @@ class StockAlertSystem:
         self.sentiment_analyzer = SentimentAnalyzer()
         self.cache = {}
         self.last_update = None
+        self.use_database = True  # Use stock_analysis.py database if available
+    
+    def get_alerts_from_database(self):
+        """Get alerts from stock_analysis.py database if available"""
+        try:
+            import sqlite3
+            with sqlite3.connect("backend/alerts.db") as conn:
+                rows = conn.execute("""
+                    SELECT Ticker, Close, Volume, volume_z, Volume_Ratio, Volume_Alert, RSI, 
+                           Price_Change, Sentiment_Score, Mention_Count, Timestamp 
+                    FROM latest_alerts
+                """).fetchall()
+                
+                if not rows:
+                    return None
+                
+                alerts = []
+                for r in rows:
+                    # Map priority
+                    priority = 'normal'
+                    if 'High' in r[5]:
+                        priority = 'high'
+                    elif 'Medium' in r[5]:
+                        priority = 'medium'
+                    elif 'Low' in r[5]:
+                        priority = 'low'
+                    
+                    alert = {
+                        'id': f"{r[0]}-{int(time.time())}",
+                        'ticker': r[0],
+                        'mentionCount': r[9] if r[9] else 0,
+                        'volumeRatio': round(r[4], 2) if r[4] else 1.0,
+                        'currentPrice': round(r[1], 2) if r[1] else 0,
+                        'priceChange': round(r[7], 2) if r[7] else 0,
+                        'detectedAt': r[10] if r[10] else datetime.now().isoformat(),
+                        'priority': priority,
+                        'sentimentScore': round(r[8], 2) if r[8] else 0,
+                        'volumeZScore': round(r[3], 2) if r[3] else 0,
+                        'rsi': round(r[6], 2) if r[6] else 50.0,
+                        'advice': self.generate_advice_for_alert(r[0], r[1], r[7], r[4], r[8])
+                    }
+                    alerts.append(alert)
+                
+                return alerts
+        except Exception as e:
+            logger.warning(f"Could not fetch from database: {e}")
+            return None
+    
+    def generate_advice_for_alert(self, ticker, price, price_change, volume_ratio, sentiment_score):
+        """Generate advice for an alert"""
+        sentiment_desc = "bullish" if sentiment_score > 0.3 else "bearish" if sentiment_score < -0.3 else "neutral"
+        volume_desc = "extremely high" if volume_ratio > 3 else "elevated" if volume_ratio > 2 else "moderate"
+        
+        advice_parts = []
+        advice_parts.append(f"{ticker} is experiencing {volume_desc} trading volume at {volume_ratio:.1f}x the average")
+        
+        if abs(price_change) > 5:
+            direction = "surging" if price_change > 0 else "declining sharply"
+            advice_parts.append(f"with the price {direction} by {abs(price_change):.1f}%")
+        elif abs(price_change) > 2:
+            direction = "rising" if price_change > 0 else "falling"
+            advice_parts.append(f"while {direction} by {abs(price_change):.1f}%")
+        
+        if abs(sentiment_score) > 0.3:
+            advice_parts.append(f"Social sentiment is {sentiment_desc} ({sentiment_score:+.1f})")
+        
+        if volume_ratio > 3 and abs(price_change) > 3:
+            recommendation = "This combination suggests heightened volatility. Consider waiting for stabilization"
+        elif volume_ratio > 2:
+            recommendation = "Watch for confirmation of trend direction before taking positions"
+        else:
+            recommendation = "Monitor for volume confirmation before acting"
+        
+        advice_parts.append(recommendation + ".")
+        return ". ".join(advice_parts)
     
     def get_alerts(self, force_refresh: bool = False) -> List[Dict]:
         """Generate stock alerts combining volume and sentiment"""
+        
+        # Try to get alerts from database first (if stock_analysis.py has run)
+        if self.use_database and not force_refresh:
+            db_alerts = self.get_alerts_from_database()
+            if db_alerts:
+                logger.info(f"Returning {len(db_alerts)} alerts from database")
+                self.cache['alerts'] = db_alerts
+                self.last_update = datetime.now()
+                return db_alerts
         
         # Use cache if recent
         if not force_refresh and self.last_update:
@@ -372,12 +477,14 @@ class StockAlertSystem:
                 if df.empty:
                     continue
                 
-                # Calculate volume metrics
+                # Calculate volume metrics and RSI
                 df = self.volume_analyzer.calculate_volume_zscore(df)
+                df = self.volume_analyzer.calculate_rsi(df)
                 latest = df.iloc[-1]
                 
                 volume_z = latest['volume_z'] if 'volume_z' in df.columns else 0
                 volume_ratio = self.volume_analyzer.get_volume_ratio(df)
+                rsi = float(latest['RSI']) if 'RSI' in df.columns else 50.0
                 priority = self.volume_analyzer.classify_alert(volume_z)
                 
                 # Get sentiment
@@ -459,6 +566,7 @@ class StockAlertSystem:
                         'priority': priority,
                         'sentimentScore': round(sentiment_score, 2),
                         'volumeZScore': round(volume_z, 2),
+                        'rsi': round(rsi, 2),
                         'advice': advice
                     }
                     alerts.append(alert)

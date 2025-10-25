@@ -10,6 +10,9 @@ export const mockStockAlerts: StockAlert[] = [
     priceChange: 12.5,
     detectedAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
     priority: 'high',
+    sentimentScore: 0.75,
+    volumeZScore: 4.5,
+    rsi: 72.3,
     advice: 'GME is showing extremely high volume activity (4.2x average) with strong positive momentum. While the social sentiment is bullish, exercise caution as meme stocks are highly volatile. Consider taking profits or setting stop-losses to manage risk.'
   },
   {
@@ -21,6 +24,9 @@ export const mockStockAlerts: StockAlert[] = [
     priceChange: -2.3,
     detectedAt: new Date(Date.now() - 12 * 60 * 1000).toISOString(),
     priority: 'high',
+    sentimentScore: 0.45,
+    volumeZScore: 4.1,
+    rsi: 58.7,
     advice: 'AMC displays high trading volume but negative price momentum. This divergence suggests potential profit-taking or uncertainty. Wait for price stabilization before entry, or consider short-term trading strategies with tight risk management.'
   },
   {
@@ -32,6 +38,9 @@ export const mockStockAlerts: StockAlert[] = [
     priceChange: 8.7,
     detectedAt: new Date(Date.now() - 18 * 60 * 1000).toISOString(),
     priority: 'medium',
+    sentimentScore: 0.62,
+    volumeZScore: 3.2,
+    rsi: 65.4,
     advice: 'BB shows moderate volume increase with solid positive price action. The momentum is promising but not extreme. This could be a good entry point for swing trading, but maintain position sizing discipline given the meme stock nature.'
   },
   {
@@ -43,6 +52,9 @@ export const mockStockAlerts: StockAlert[] = [
     priceChange: 5.2,
     detectedAt: new Date(Date.now() - 25 * 60 * 1000).toISOString(),
     priority: 'medium',
+    sentimentScore: 0.38,
+    volumeZScore: 2.8,
+    rsi: 61.2,
     advice: 'NOK exhibits steady volume growth with positive price momentum. The lower volatility compared to other meme stocks may offer a more conservative play. Monitor for continued social media traction before increasing position size.'
   },
   {
@@ -54,6 +66,9 @@ export const mockStockAlerts: StockAlert[] = [
     priceChange: -1.4,
     detectedAt: new Date(Date.now() - 32 * 60 * 1000).toISOString(),
     priority: 'low',
+    sentimentScore: 0.15,
+    volumeZScore: 1.9,
+    rsi: 48.3,
     advice: 'PLTR shows modest volume activity with slight negative price movement. The current sentiment is mixed. This may be a consolidation phase; wait for clearer directional signals or consider this as a potential buying opportunity if you believe in fundamentals.'
   },
   {
@@ -65,6 +80,9 @@ export const mockStockAlerts: StockAlert[] = [
     priceChange: 3.8,
     detectedAt: new Date(Date.now() - 8 * 60 * 1000).toISOString(),
     priority: 'low',
+    sentimentScore: 0.55,
+    volumeZScore: 1.6,
+    rsi: 56.8,
     advice: 'TSLA maintains high social engagement with moderate volume and positive price action. As a more established stock with meme characteristics, it offers relatively lower risk. The current momentum suggests continued strength; suitable for both short and longer-term positions.'
   },
   {
@@ -76,6 +94,9 @@ export const mockStockAlerts: StockAlert[] = [
     priceChange: 7.2,
     detectedAt: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
     priority: 'medium',
+    sentimentScore: 0.68,
+    volumeZScore: 2.6,
+    rsi: 67.9,
     advice: 'NVDA demonstrates strong price appreciation with increased volume, backed by solid fundamentals in AI sector. This combination of technical momentum and fundamental strength makes it attractive. Consider gradual position building on pullbacks rather than chasing the current rally.'
   },
   {
@@ -87,6 +108,9 @@ export const mockStockAlerts: StockAlert[] = [
     priceChange: 1.5,
     detectedAt: new Date(Date.now() - 28 * 60 * 1000).toISOString(),
     priority: 'low',
+    sentimentScore: 0.22,
+    volumeZScore: 1.3,
+    rsi: 52.4,
     advice: 'AAPL shows minimal unusual volume activity with steady positive movement. As a blue-chip stock with occasional meme characteristics, it represents a safer option. The current metrics suggest stable growth rather than speculative surge; suitable for conservative portfolios.'
   }
 ];
@@ -99,6 +123,9 @@ export const generateRandomAlert = (): StockAlert => {
   const randomPriority = priorities[Math.floor(Math.random() * priorities.length)];
   const volumeRatio = Math.random() * 5 + 1;
   const priceChange = (Math.random() - 0.5) * 20;
+  const sentimentScore = (Math.random() - 0.5) * 2;  // Range: -1 to 1
+  const volumeZScore = Math.random() * 5;  // Range: 0 to 5
+  const rsi = Math.random() * 40 + 30;  // Range: 30 to 70
   
   return {
     id: Math.random().toString(36).substr(2, 9),
@@ -109,6 +136,9 @@ export const generateRandomAlert = (): StockAlert => {
     priceChange: priceChange,
     detectedAt: new Date().toISOString(),
     priority: randomPriority,
+    sentimentScore: sentimentScore,
+    volumeZScore: volumeZScore,
+    rsi: rsi,
     advice: `${randomTicker} is experiencing ${volumeRatio > 3 ? 'high' : volumeRatio > 2 ? 'moderate' : 'low'} volume activity with ${priceChange > 0 ? 'positive' : 'negative'} price momentum. Monitor closely and manage risk appropriately given the volatile nature of meme stocks.`
   };
 };

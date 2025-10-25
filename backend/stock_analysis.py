@@ -2,11 +2,11 @@
 # in seperate file web_scraped.py
 
 ##import web_scraped_mock as ws # FOR web_scraped.py, this will re-run the web scraping / update with latest data
-from backend.web_scraped_mock import target_tickers, stock_data #, mentions --> then we can implement that here
+from web_scraped_mock import target_tickers, stock_data #, mentions --> then we can implement that here
 import pandas as pd
 import ta
 import sqlite3
-from backend.notifier import send_alert_email
+from notifier import send_alert_email
 from datetime import datetime
 
 data_frames = [] 
