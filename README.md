@@ -1,19 +1,19 @@
-# 🚀 Meme Stock Alert Dashboard
+# Meme Stock Alert Dashboard
 
 A real-time stock monitoring system that combines **volume analysis**, **social sentiment analysis**, and **email notifications** to detect potential meme stock momentum.
 
 ![Dashboard Preview](https://img.shields.io/badge/Status-Active-green) ![Python](https://img.shields.io/badge/Python-3.8+-blue) ![Next.js](https://img.shields.io/badge/Next.js-14-black)
 
-## 🎯 Features
+## Features
 
-- **📊 Real-time Volume Analysis**: Detects unusual trading volume spikes using statistical z-scores
-- **🤖 AI-Powered Sentiment**: Uses Google's Gemini AI to analyze sentiment
-- **📧 Email Alerts**: Automatic notifications for high-priority stock movements
-- **📈 Beautiful Dashboard**: Modern, responsive UI with real-time updates
-- **🔄 Auto-Refresh**: Continuous monitoring with configurable refresh intervals
-- **⚡ Fast & Efficient**: Built with Flask backend and Next.js frontend
+- **Real-time Volume Analysis**: Detects unusual trading volume spikes using statistical z-scores
+- **AI-Powered Sentiment**: Uses Google's Gemini AI to analyze sentiment
+- **Email Alerts**: Automatic notifications for high-priority stock movements
+- **Beautiful Dashboard**: Modern, responsive UI with real-time updates
+- **Auto-Refresh**: Continuous monitoring with configurable refresh intervals
+- **Fast & Efficient**: Built with Flask backend and Next.js frontend
 
-## 🏗️ Architecture
+##Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -40,7 +40,7 @@ A real-time stock monitoring system that combines **volume analysis**, **social 
         └─────────────────┘
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -167,7 +167,7 @@ z < 1.5    → Normal
 }
 ```
 
-## 🎨 Features Breakdown
+## Features Breakdown
 
 ### Volume Analysis
 - Calculates 50-day rolling average and standard deviation
@@ -186,37 +186,13 @@ z < 1.5    → Normal
 - Configurable recipients
 - Failed notification tracking
 
-## 📁 Project Structure
-
-```
-NewHacks-2025/
-├── backend/
-│   ├── gemini.py              # Original Gemini integration
-│   └── integrated_backend.py  # Main integrated backend
-├── meme-stock-dashboard/
-│   ├── src/
-│   │   ├── app/
-│   │   │   ├── page.tsx       # Main dashboard
-│   │   │   └── api/           # API routes
-│   │   ├── components/        # React components
-│   │   └── types/             # TypeScript types
-│   ├── python-backend/
-│   │   └── app.py             # Email backend
-│   └── package.json
-├── requirements.txt           # Python dependencies
-├── api_keys.py.example        # API key template
-├── start-all-services.sh      # Startup script
-└── README.md
-```
-
-## 🔐 Security Notes
-
+## Security Notes
 - Never commit `api_keys.py` to version control
 - Use environment variables for production
 - Email credentials should be app-specific passwords
 - CORS is enabled for development (restrict in production)
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### "No module named 'api_keys'"
 - Copy `api_keys.py.example` to `api_keys.py`
@@ -240,26 +216,7 @@ lsof -ti:5001 | xargs kill -9
 - yfinance may have rate limits
 - Some tickers might not be available
 
-## 🚧 Future Enhancements
-
-- [ ] Enhanced sentiment data sources
-- [ ] Historical trend analysis
-- [ ] Machine learning price prediction
-- [ ] Mobile app
-- [ ] WebSocket support for real-time updates
-- [ ] User authentication
-- [ ] Multiple watchlists
-- [ ] Custom alert thresholds per stock
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 👥 Contributors
-
-Built with ❤️ for NewHacks 2025
-
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - [yfinance](https://github.com/ranaroussi/yfinance) for stock data
 - [Google Gemini](https://ai.google.dev/) for AI sentiment analysis
