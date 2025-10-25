@@ -1,22 +1,33 @@
-# Email sending logic --> WORK IN PROGRESS
+# Email sending logic 
 
-# Create a GMAIL account just for this project
+# Create a GMAIL account just for this project (see Google Docs for Email and Password)
+
+import os
+from dotenv import load_dotenv
+
+# Load .env file
+load_dotenv()
+
+EMAIL_USER = os.getenv("EMAIL_USER")
+EMAIL_PASS = os.getenv("EMAIL_PASS")
+
+###############
 
 import smtplib #defines an SMTP client session object that can be used to 
 # send mail to any internet machine with an SMTP or ESMTP listener daemon
 from email.message import EmailMessage # class used to create and manipulate email messages  
 
-def send_alert_email(to_email: str, ticker: str, alert: str, volume_z: float, rsi: float):
+def send_alert_email(to_email: str, ticker: str, alert: str, volume: int, rsi: float):
     msg = EmailMessage()
     msg["Subject"] = f"[Stock Alert] {ticker} - {alert}"
-    msg["From"] = "faris.abuain@gmail.com" # change this (i don't want my email showing up in public code)
+    msg["From"] = EMAIL_USER 
     msg["To"] = to_email
 
     body = (
         f"Stock: {ticker}\n"
         f"Alert Level: {alert}\n"
-       # f"Mentions: {}\n"
-       # f" Volume: {volume}\n"
+       # f"Mentions: {}\n".  # Are we gonna have the number of mentions from the web scraping?
+        f"Volume: {volume}\n"
         f"RSI: {rsi:.2f}\n\n"
         "Check your dashboard for details."
     )
@@ -24,5 +35,5 @@ def send_alert_email(to_email: str, ticker: str, alert: str, volume_z: float, rs
 
     # Send via Gmail (requires an app password)
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
-        smtp.login("faris.abuain@gmail.com", "YOUR_APP_PASSWORD") # CREATE AN EMAIL JUST FOR THIS PROJECT
+        smtp.login(EMAIL_USER, EMAIL_PASS) # CREATE AN EMAIL JUST FOR THIS PROJECT
         smtp.send_message(msg)
