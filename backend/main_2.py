@@ -2,9 +2,12 @@
 # in seperate file web_scraped.py
 
 ##import web_scraped_mock as ws # FOR web_scraped.py, this will re-run the web scraping / update with latest data
-from web_scraped_mock import target_tickers, stock_data
+from backend.web_scraped_mock import target_tickers, stock_data #, mentions --> then we can implement that here
 import pandas as pd
 import ta
+import sqlite3
+from backend.notifier import send_alert_email
+from datetime import datetime
 
 data_frames = [] 
 
@@ -13,17 +16,15 @@ for ticker in target_tickers:
     df['Ticker'] = ticker
     data_frames.append(df)
 
+
 data = pd.concat(data_frames, ignore_index=True)
 
 data['volume_z'] = data.groupby('Ticker')['Volume'].transform(
     lambda x: (x - x.rolling(50).mean()) / x.rolling(50).std())
 
-# compute the rolling z score of the volume for eaach target stock 
-# --> how unusual is the volume compared to the last 50 days
-# --> should we make this less than 50 days to identify short-term spikes?
-# --> or should we make it more than 50 days to make it more robust to fluctuations?
+data['Volume_Ratio'] = data['Volume'] / data.groupby('Ticker')['Volume'].transform('mean')
 
-# Classification to classify status of volume spikes
+# Classification to classify status of volume spikes:
 
 def classify_alert(z):
     if pd.isna(z):
@@ -40,26 +41,37 @@ def classify_alert(z):
 data['Volume_Alert'] = data['volume_z'].apply(classify_alert)
 
 # RSI Indicator:
+def compute_rsi(series, window=14):
+    rsi = ta.momentum.RSIIndicator(close=series, window=window).rsi()
+    return rsi.reindex(series.index, fill_value=None)
 
-rsi_window = 14 # typical window for RSI calculation
-data['RSI'] = data.groupby('Ticker')['Close'].transform(
-    lambda x: ta.momentum.RSIIndicator(close=x, window=rsi_window).rsi()) 
+data['RSI'] = data.groupby('Ticker')['Close'].transform(lambda x: compute_rsi(x))
 
-# GENERATED SUGGESTION (to display a table / dashboard of results for *testing purposes*):
-latest = data.groupby('Ticker').tail(1)[['Ticker', 'Volume', 'volume_z', 'Volume_Alert', 'RSI']]
-print("\n=== Latest Volume and RSI Alerts ===")
-print(latest.sort_values('volume_z', ascending=False).to_string(index=False))
+# Generate latest alerts summary:
 
-# Store latest alerts in the database in the backend
-# --> backend/alerts.db will store user emails + preferences + latest alerts
+latest = data.groupby('Ticker').tail(1)[['Ticker', 'Close', 'Volume', 'volume_z', 'Volume_Ratio', 'Volume_Alert', 'RSI']]
 
-with sqlite3.connect("backend/alerts.db") as conn: # Crea
+latest['Timestamp'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+# Generate a table summary for testing purposes:
+#print("\n=== Latest Volume and RSI Alerts ===")
+#print(latest.sort_values('volume_z', ascending=False).to_string(index=False))
+print(f'{data}')
+
+
+# Store latest alerts in alerts.db
+
+with sqlite3.connect("backend/alerts.db") as conn: 
     conn.execute("""
         CREATE TABLE IF NOT EXISTS latest_alerts (
             Ticker TEXT,
-            Volume_Alert TEXT,
+            Close REAL,
+            Volume INTEGER,
             volume_z REAL,
-            RSI REAL
+            Volume_Ratio REAL,
+            Volume_Alert TEXT,
+            RSI REAL,
+            Timestamp TEXT
         )
     """)
     # Clear old alerts
@@ -67,23 +79,17 @@ with sqlite3.connect("backend/alerts.db") as conn: # Crea
     # Insert new alerts
     for _, row in latest.iterrows():
         conn.execute(
-            "INSERT INTO latest_alerts (Ticker, Volume_Alert, volume_z, RSI) VALUES (?, ?, ?, ?)",
-            (row['Ticker'], row['Volume_Alert'], row['volume_z'], row['RSI'])
+            "INSERT INTO latest_alerts (Ticker, Close, Volume, volume_z, Volume_Ratio, Volume_Alert, RSI, Timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (row['Ticker'], row['Close'], row['Volume'],row['volume_z'], row['Volume_Ratio'], row['Volume_Alert'], row['RSI'], row['Timestamp'])
         )
 
 # Sends email alerts to users based on their preferences and latest analysis results
 
-import sqlite3
-from backend.notifier import send_alert_email
-
-# After generating 'latest' DataFrame
 with sqlite3.connect("backend/alerts.db") as conn:
     users = conn.execute("SELECT email, alerts FROM user_prefs").fetchall()
 
 for email, alerts_str in users:
     alert_list = alerts_str.split(",")
-
-    # Filter alerts that match user's preferences
     user_alerts = latest[latest['Volume_Alert'].isin(alert_list)]
 
     for _, row in user_alerts.iterrows():
@@ -91,9 +97,12 @@ for email, alerts_str in users:
             to_email=email,
             ticker=row['Ticker'],
             alert=row['Volume_Alert'],
-            volume_z=row['volume_z'],
-            rsi=row['RSI']
-        )
+            rsi=row['RSI'],
+            timestamp=row['Timestamp'],
+            price=row['Close'], 
+            volume=row['Volume'],
+            volume_ratio=row['Volume_Ratio']
+            )
 
 # Note: In actual implementation, ensure to handle email sending limits and avoid spamming users.
 

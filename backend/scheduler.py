@@ -1,12 +1,14 @@
-from apscheduler.schedulers.blocking import BlockingScheduler
+import time
+import schedule
 import subprocess
 
-scheduler = BlockingScheduler()
+def run_scraper():
+    subprocess.run(["python", "backend/main_2.py"], check=True)
 
-@scheduler.scheduled_job('interval', minutes=30) # every 30 minutes
-def run_analysis():
-    subprocess.run(["python", "../main_2.py"])
+schedule.every(30).minutes.do(run_scraper)
 
-scheduler.start()
-
-# Regularly runs main_2.py every 30 minutes to update alerts.db with latest stock analysis results.
+if __name__ == "__main__":
+    print("Scheduler started. Running every 30 minutes...")
+    while True:
+        schedule.run_pending()
+        time.sleep(10)
