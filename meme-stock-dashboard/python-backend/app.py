@@ -13,7 +13,14 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+# Enable CORS for all routes with specific configuration
+CORS(app, resources={
+    r"/*": {
+        "origins": ["http://localhost:3000", "http://localhost:3001"],
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type"]
+    }
+})
 
 class EmailService:
     def __init__(self):
@@ -227,7 +234,9 @@ email_service = EmailService()
 def handle_email():
     """Handle email API requests"""
     try:
+        logger.info(f"Received email API request from {request.remote_addr}")
         data = request.get_json()
+        logger.info(f"Request data: {data}")
         action = data.get('action')
         
         if action == 'send-alert':
