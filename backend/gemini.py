@@ -1,13 +1,11 @@
 """
-Meme Stock Radar: Reddit + Momentum + Gemini
+Meme Stock Radar: Gemini Sentiment Analysis + Volume Analysis
 
 Requirements:
-pip install yfinance pandas google-generativeai praw
+pip install yfinance pandas google-generativeai
 pip install -q -U google-genai
 """
-# TODO: remove later
 import yfinance as yf
-
 import pandas as pd
 import google.generativeai as genai
 import api_keys
@@ -15,20 +13,18 @@ import api_keys
 # Configure Gemini
 genai.configure(api_key=api_keys.GEMINI_API_KEY)
 
-# TODO: get tickers from webscraping
-# Can edit lookback days depending on what we think works
+# Configuration
 TICKERS = ["TSLA", "NVDA"]
 LOOKBACK_DAYS = 3
 
-# TODO: Replace with actual post data later
-test_reddit_posts = [
-    "TSLA is mooning, everyone’s buying calls! 🚀🚀",
+# Example posts for testing sentiment analysis
+test_posts = [
+    "TSLA is mooning, everyone's buying calls! 🚀🚀",
     "TSLA prices predicted to rise!",
     "NVDA might drop soon, too overpriced."
 ]
 
 # Fetch stock data
-# TODO: replace with other code later, delete this function 
 def fetch_stock_data(tickers, days=5):
     data = []
     for t in tickers:
@@ -41,7 +37,7 @@ def fetch_stock_data(tickers, days=5):
                 "ticker": t,
                 "volume_ratio": round(vol_ratio, 2)
             })
-    print("fetch)strock_data data: ")
+    print("fetch_stock_data data: ")
     print(data)
     return pd.DataFrame(data)
 
@@ -91,7 +87,7 @@ def parse_gemini_csv_response(raw_text):
 
 def generate_gemini_sentiment_analysis(posts):
     prompt = f"""
-    Analyze the sentiment for each of the following Reddit posts.
+    Analyze the sentiment for each of the following social media posts.
     Return these as a string with csv format. Include headers "ticker", "sentiment", and "sentiment_score" (-1 to +1).
 
     Posts:
@@ -122,8 +118,8 @@ if __name__ == "__main__":
     momentum_df = fetch_stock_data(TICKERS, LOOKBACK_DAYS)
 
     # Sentiment analysis (Gemini)
-    model = genai.GenerativeModel("gemini-2.5-flash")
-    sentiment_df = generate_gemini_sentiment_analysis(test_reddit_posts)
+    model = genai.GenerativeModel("gemini-2.0-flash-exp")
+    sentiment_df = generate_gemini_sentiment_analysis(test_posts)
 
     # COMBINE SENTIMENT + MOMENTUM
     if not sentiment_df.empty:
