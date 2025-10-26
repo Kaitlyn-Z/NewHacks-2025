@@ -3,13 +3,12 @@ import sqlite3
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 
-def load_active_alerts():
+def load_latest_alerts():
     with sqlite3.connect("backend/alerts.db") as conn:
         df = pd.read_sql_query("""
-                               SELECT Ticker, Close, Volume,
-                               volume_z, Volume_Ratio, RSI
-                               FROM active_alerts
-                               JOIN latest_alerts USING (Ticker)""", conn)
+            SELECT Ticker, Close, Volume, volume_z, Volume_Ratio, RSI
+            FROM latest_alerts
+        """, conn)
     return df
 
 def compute_features(df: pd.DataFrame):
