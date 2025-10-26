@@ -6,7 +6,6 @@ and other analysis.
 import pandas as pd
 import yfinance as yf
 
-
 # Scrape data for given tickers (from Reddit scraping) and put in pandas DataFrame
 # Use data for stock analysis (volume spikes, RSI, etc.)
 def fetch_stock_data(tickers, days):
