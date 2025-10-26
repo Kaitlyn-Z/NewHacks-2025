@@ -13,6 +13,11 @@ import ta
 from datetime import datetime
 from notifier import send_alert_email
 from backend.stock_data_scraping import fetch_stock_data
+import os
+
+# Compute absolute path to alerts.db relative to this file
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, "alerts.db")
 
 def classify_alert(z: float) -> str:
     if pd.isna(z): return 'No data'
@@ -43,7 +48,7 @@ def prepare_stock_data(tickers_list, days=1) -> pd.DataFrame:
     data['Timestamp'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     return data
 
-def setup_database(db_path="backend/alerts.db"):
+def setup_database(db_path=DB_PATH):
     with sqlite3.connect(db_path) as conn:
         conn.execute("""
             CREATE TABLE IF NOT EXISTS latest_alerts (
@@ -75,7 +80,7 @@ def get_latest_active_alerts(data: pd.DataFrame, threshold_z: float = 1.5):
     return latest, active_alerts_new
 
 def update_active_alerts(data: pd.DataFrame, active_alerts_new: pd.DataFrame,
-                         db_path="backend/alerts.db", volume_tolerance=1.5):
+                         db_path=DB_PATH, volume_tolerance=1.5):
     newly_added = []
     with sqlite3.connect(db_path) as conn:
         existing_alerts = pd.read_sql_query("SELECT * FROM active_alerts", conn)
@@ -95,7 +100,7 @@ def update_active_alerts(data: pd.DataFrame, active_alerts_new: pd.DataFrame,
             """, (row['Ticker'], row['Volume_Alert'], row['Trigger_Volume'], row['Timestamp']))
     return newly_added
 
-def send_new_alert_emails(active_alerts_new: pd.DataFrame, newly_added: list, db_path="backend/alerts.db"):
+def send_new_alert_emails(active_alerts_new: pd.DataFrame, newly_added: list, db_path=DB_PATH):
     if not newly_added: return
     with sqlite3.connect(db_path) as conn:
         users = conn.execute("SELECT email, alerts FROM user_prefs").fetchall()
@@ -117,7 +122,7 @@ def send_new_alert_emails(active_alerts_new: pd.DataFrame, newly_added: list, db
                 volume_ratio=1.0
             )
 
-def update_latest_alerts_table(active_alerts_new: pd.DataFrame, db_path="backend/alerts.db"):
+def update_latest_alerts_table(active_alerts_new: pd.DataFrame, db_path=DB_PATH):
     with sqlite3.connect(db_path) as conn:
         conn.execute("DELETE FROM latest_alerts")
         for _, row in active_alerts_new.iterrows():
