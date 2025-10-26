@@ -1,35 +1,41 @@
-import React, { useEffect, useState } from "react";
-import StockCard from "./StockCard"; // adjust path if needed
-import { StockAlert } from "../types"; // or define the interface locally
+import React, { useState, useEffect } from 'react';
+import StockCard from './StockCard';
+import { StockAlert } from '@/types';
+import { fetchAlerts } from '../api/alerts'; 
 
 const Dashboard: React.FC = () => {
   const [alerts, setAlerts] = useState<StockAlert[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchAlerts = async () => {
+    async function loadAlerts() {
       try {
-        const response = await fetch("http://localhost:8000/alerts"); // your backend endpoint
-        const data = await response.json();
+        const data = await fetchAlerts();
         setAlerts(data);
       } catch (err) {
-        console.error("Failed to fetch alerts:", err);
+        console.error('Error fetching alerts:', err);
+      } finally {
+        setLoading(false);
       }
-    };
+    }
 
-    fetchAlerts();
-    const interval = setInterval(fetchAlerts, 60000); // refresh every 60s
+    loadAlerts();
+
+    // Optional: poll every 10s
+    const interval = setInterval(loadAlerts, 10000);
     return () => clearInterval(interval);
   }, []);
 
+  if (loading) return <p>Loading alerts...</p>;
+
   return (
-    <div className="dashboard-container">
-      {alerts.length === 0 ? (
-        <p>No alerts yet.</p>
-      ) : (
-        alerts.map((alert) => (
+    <div style={{ padding: '2rem' }}>
+      <h1>Stock Dashboard</h1>
+      <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+        {alerts.map(alert => (
           <StockCard key={alert.id} alert={alert} />
-        ))
-      )}
+        ))}
+      </div>
     </div>
   );
 };

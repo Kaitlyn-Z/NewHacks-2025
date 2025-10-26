@@ -1,15 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, Activity, TrendingUp, AlertTriangle, Clock, Mail, Settings } from 'lucide-react';
+import { RefreshCw, Activity, TrendingUp, AlertTriangle, Clock, Settings } from 'lucide-react';
 import { StockAlert } from '@/types';
 import { EmailSettings } from '@/types/email';
-import { mockStockAlerts, generateRandomAlert } from '@/data/mockData';
 import StockCard from '@/components/StockCard';
 import SimpleEmailSettingsModal, { AlertPreferences } from '@/components/SimpleEmailSettings';
 
-export default function Dashboard() {
-  const [alerts, setAlerts] = useState<StockAlert[]>(mockStockAlerts);
+export default function Page() {
+  const [alerts, setAlerts] = useState<StockAlert[]>([]);
   const [loading, setLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [mounted, setMounted] = useState(false);
@@ -21,9 +20,11 @@ export default function Dashboard() {
   const [alertPreferences, setAlertPreferences] = useState<AlertPreferences>({
     high: true,
     medium: true,
-    low: false
+    low: false,
   });
 
+
+  // Sends email notifications for new alerts
   const sendEmailNotification = async (alert: StockAlert) => {
     if (!emailEnabled || !userEmail) return;
 
@@ -33,10 +34,7 @@ export default function Dashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'send-alert',
-          alert: {
-            ...alert,
-            emailSent: false,
-          },
+          alert: { ...alert, emailSent: false },
           email: userEmail,
         }),
       });
@@ -53,18 +51,18 @@ export default function Dashboard() {
     }
   };
 
+  // Fetch alerts from backend
   const fetchAlerts = async () => {
     setLoading(true);
     try {
-      // Fetch real data from integrated backend
       const response = await fetch('http://localhost:5001/api/alerts?refresh=true');
       const data = await response.json();
-      
+
       if (data.success && data.alerts) {
         const previousAlerts = alerts;
         setAlerts(data.alerts);
-        
-        // Check for new alerts matching user preferences and send email notifications
+
+        // Send email for new alerts based on user preferences
         if (emailEnabled && userEmail) {
           const shouldSendAlert = (priority: string) => {
             if (priority === 'high') return alertPreferences.high;
@@ -72,12 +70,13 @@ export default function Dashboard() {
             if (priority === 'low') return alertPreferences.low;
             return false;
           };
-          
-          const newAlerts = data.alerts.filter((alert: StockAlert) => 
-            shouldSendAlert(alert.priority) &&
-            !previousAlerts.some(prev => prev.ticker === alert.ticker && prev.priority === alert.priority)
+
+          const newAlerts = data.alerts.filter(
+            (alert: StockAlert) =>
+              shouldSendAlert(alert.priority) &&
+              !previousAlerts.some(prev => prev.ticker === alert.ticker && prev.priority === alert.priority)
           );
-          
+
           for (const alert of newAlerts) {
             await sendEmailNotification(alert);
           }
@@ -85,55 +84,42 @@ export default function Dashboard() {
       } else {
         console.error('Failed to fetch alerts:', data.error);
       }
-      
+
       setLastUpdated(new Date());
     } catch (error) {
       console.error('Failed to fetch alerts:', error);
-      // Fallback to mock data on error
-      if (alerts.length === 0) {
-        setAlerts(mockStockAlerts);
-      }
     } finally {
       setLoading(false);
     }
   };
 
+  // Load settings and fetch initial alerts on mount
   useEffect(() => {
-    // Mark component as mounted to prevent hydration errors
     setMounted(true);
-    
-    // Load user email from localStorage
+
     const savedEmail = localStorage.getItem('userEmail');
     const savedEnabled = localStorage.getItem('emailEnabled') === 'true';
     if (savedEmail) {
       setUserEmail(savedEmail);
       setEmailEnabled(savedEnabled);
     }
-    
-    // Load alert preferences from localStorage
+
     const savedPreferences = localStorage.getItem('alertPreferences');
-    if (savedPreferences) {
-      setAlertPreferences(JSON.parse(savedPreferences));
-    }
-    
-    // Fetch initial data
+    if (savedPreferences) setAlertPreferences(JSON.parse(savedPreferences));
+
     fetchAlerts();
   }, []);
 
+  // Auto-refresh alerts
   useEffect(() => {
     if (autoRefresh) {
-      const interval = setInterval(fetchAlerts, 1800000); // 30 minutes (matches scheduler)
+      const interval = setInterval(fetchAlerts, 1800000); // 30 minutes
       return () => clearInterval(interval);
     }
   }, [autoRefresh, emailEnabled, userEmail]);
 
-  const handleManualRefresh = () => {
-    fetchAlerts();
-  };
-
-  const toggleAutoRefresh = () => {
-    setAutoRefresh(!autoRefresh);
-  };
+  const handleManualRefresh = () => fetchAlerts();
+  const toggleAutoRefresh = () => setAutoRefresh(!autoRefresh);
 
   const handleEmailSave = (email: string, preferences: AlertPreferences) => {
     setUserEmail(email);
@@ -144,16 +130,12 @@ export default function Dashboard() {
     localStorage.setItem('alertPreferences', JSON.stringify(preferences));
   };
 
-  const getStats = () => {
-    const highAlerts = alerts.filter(alert => alert.priority === 'high').length;
-    const mediumAlerts = alerts.filter(alert => alert.priority === 'medium').length;
-    const lowAlerts = alerts.filter(alert => alert.priority === 'low').length;
-    const totalMentions = alerts.reduce((sum, alert) => sum + alert.mentionCount, 0);
-    
-    return { highAlerts, mediumAlerts, lowAlerts, totalMentions };
+  const stats = {
+    highAlerts: alerts.filter(alert => alert.priority === 'high').length,
+    mediumAlerts: alerts.filter(alert => alert.priority === 'medium').length,
+    lowAlerts: alerts.filter(alert => alert.priority === 'low').length,
+    totalMentions: alerts.reduce((sum, alert) => sum + alert.mentionCount, 0),
   };
-
-  const stats = getStats();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -170,24 +152,22 @@ export default function Dashboard() {
                 <p className="text-sm text-gray-600">Real-time social sentiment analysis</p>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2 text-sm text-gray-600">
                 <Clock className="w-4 h-4" />
                 <span>Last updated: {mounted ? lastUpdated.toLocaleTimeString() : '--:--:--'}</span>
               </div>
-              
+
               <button
                 onClick={toggleAutoRefresh}
                 className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                  autoRefresh 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-gray-100 text-gray-600'
+                  autoRefresh ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
                 }`}
               >
                 Auto-refresh {autoRefresh ? 'ON' : 'OFF'}
               </button>
-              
+
               <button
                 onClick={() => setShowEmailSettings(true)}
                 className="flex items-center space-x-2 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
@@ -195,7 +175,7 @@ export default function Dashboard() {
                 <Settings className="w-4 h-4" />
                 <span>Email Settings</span>
               </button>
-              
+
               <button
                 onClick={handleManualRefresh}
                 disabled={loading}
@@ -221,7 +201,7 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-lg shadow-sm p-6 border-l-4 border-yellow-500">
             <div className="flex items-center">
               <Activity className="w-8 h-8 text-yellow-500" />
@@ -231,7 +211,7 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-lg shadow-sm p-6 border-l-4 border-green-500">
             <div className="flex items-center">
               <TrendingUp className="w-8 h-8 text-green-500" />
@@ -241,7 +221,7 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-lg shadow-sm p-6 border-l-4 border-blue-500">
             <div className="flex items-center">
               <Activity className="w-8 h-8 text-blue-500" />
@@ -261,7 +241,7 @@ export default function Dashboard() {
               {alerts.length} alert{alerts.length !== 1 ? 's' : ''} detected
             </div>
           </div>
-          
+
           {loading && (
             <div className="flex justify-center py-8">
               <div className="flex items-center space-x-2 text-gray-600">
@@ -270,13 +250,13 @@ export default function Dashboard() {
               </div>
             </div>
           )}
-          
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {alerts.map((alert) => (
               <StockCard key={alert.id} alert={alert} />
             ))}
           </div>
-          
+
           {alerts.length === 0 && !loading && (
             <div className="text-center py-12">
               <Activity className="w-12 h-12 text-gray-400 mx-auto mb-4" />
