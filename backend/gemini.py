@@ -4,25 +4,13 @@ Backend module integrating Google Gemini for stock analysis and recommendations
 
 import os
 import pandas as pd
-import yfinance as yf
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 
-
-def fetch_stock_data(tickers, days=5):
-    data = []
-    for t in tickers:
-        df = yf.download(t, period=f"{days}d", interval="1d", progress=False)
-        if not df.empty:
-            avg_vol = df["Volume"].mean()
-            latest = df.iloc[-1]
-            vol_ratio = latest["Volume"] / avg_vol
-            data.append({
-                "ticker": t,
-                "volume_ratio": round(vol_ratio, 2)
-            })
-    return pd.DataFrame(data)
+# TODO: import sqlite3 table from stock_analysis.py
+# use latest_alerts table from stock_analysis.py
+from stock_data_scraping import fetch_stock_data
 
 
 def parse_gemini_csv_manual(raw_text):
@@ -126,9 +114,6 @@ def main():
         combined = momentum_df.merge(avg_sentiment, on="ticker", how="left")
     else:
         combined = momentum_df.copy()
-
-    print("\n📊 Combined Data:")
-    print(combined, "\n")
 
     summary = summarize_market(client, combined)
     print("📰 Gemini Market Summary:\n")
