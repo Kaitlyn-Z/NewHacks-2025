@@ -23,7 +23,7 @@ def send_alert_email(to_email: str, ticker: str, alert: str, rsi: float, timesta
     msg["From"] = EMAIL_USER 
     msg["To"] = to_email
 
-    body = (
+    body = ("A new stock has been added to your watchlist!\n\n"
         f"Stock: {ticker}\n"
         f"Alert Level: {alert}\n"
        # f"Mentions: {}\n".  # Are we gonna have the number of mentions from the web scraping?
