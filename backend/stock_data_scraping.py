@@ -5,6 +5,12 @@ and other analysis.
 
 import pandas as pd
 import yfinance as yf
+from signals.hotstocks.cli import get_hot_tickers
+from signals.hotstocks.config import load_config
+
+cfg = load_config("config.json")
+
+tickers = get_hot_tickers(cfg)
 
 # Scrape data for given tickers (from Reddit scraping) and put in pandas DataFrame
 # Use data for stock analysis (volume spikes, RSI, etc.)
@@ -23,10 +29,10 @@ def fetch_stock_data(tickers, days):
             # Collect relevant fields
             for date, row in df.iterrows():
                 all_data.append({
-                    "ticker": t,
-                    "date": date.date(),
-                    "close": round(row["Close"], 2),
-                    "volume": int(row["Volume"])
+                    "Ticker": t,
+                    "Date": date.date(),
+                    "Close": round(row["Close"], 2),
+                    "Volume": int(row["Volume"])
                 })
 
         except Exception as e:
