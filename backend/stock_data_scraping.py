@@ -11,19 +11,33 @@ import yfinance as yf
 # Use data for stock analysis (volume spikes, RSI, etc.)
 def fetch_stock_data(tickers, days):
     all_data = []
-
     for t in tickers:
-        # Download the last N days of daily data
-        df = yf.download(t, period=f"{days}d", interval="1h", progress=False)
+        try:
+            # Attempt to download data
+            df = yf.download(t, period=f"{days}d", interval="1h", progress=False)
 
-        if not df.empty:
+            # Check if ticker returned valid data
+            if df.empty:
+                #print(f"No data found for {t}. Skipping.")
+                continue
+
+            # Collect relevant fields
             for date, row in df.iterrows():
                 all_data.append({
                     "ticker": t,
                     "date": date.date(),
-                    "close": round(row["Close"].item(), 2),
-                    "volume": int(row["Volume"].item())
+                    "close": round(row["Close"], 2),
+                    "volume": int(row["Volume"])
                 })
+
+        except Exception as e:
+            #print(f"Error fetching data for {t}: {e}")
+            continue  # Skip to the next ticker
+
+    if all_data:
+        df_all = pd.DataFrame(all_data)
+    else:
+        df_all = pd.DataFrame(columns=["ticker", "date", "close", "volume"])
 
     # Combine all tickers into one DataFrame
     df = pd.DataFrame(all_data)
