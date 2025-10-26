@@ -15,33 +15,23 @@ Usage:
 Note: Run this in the background or as a separate service.
 """
 
+# scheduler.py
+from apscheduler.schedulers.background import BackgroundScheduler
+from backend.update_alerts import main as update_alerts_main
 import time
-import schedule
-import subprocess
-import logging
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-def run_scraper():
-    """Run the stock analysis script"""
-    try:
-        logger.info("Running stock analysis...")
-        subprocess.run(["python", "backend/stock_analysis.py"], check=True)
-        logger.info("Stock analysis completed successfully")
-    except Exception as e:
-        logger.error(f"Stock analysis failed: {e}")
-
-# Run immediately on startup
-logger.info("Running initial stock analysis...")
-run_scraper()
-
-# Schedule to run every 30 minutes
-schedule.every(30).minutes.do(run_scraper)
+def scheduled_job():
+    print("Running scheduled alert pipeline...")
+    update_alerts_main()
 
 if __name__ == "__main__":
-    logger.info("Scheduler started. Running every 30 minutes...")
-    logger.info("Press Ctrl+C to stop")
-    while True:
-        schedule.run_pending()
-        time.sleep(10)
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(scheduled_job, 'interval', minutes=10)
+    scheduler.start()
+    print("Scheduler started. Press Ctrl+C to exit.")
+    try:
+        while True:
+            time.sleep(60)
+    except (KeyboardInterrupt, SystemExit):
+        scheduler.shutdown()
+        print("Scheduler stopped.")

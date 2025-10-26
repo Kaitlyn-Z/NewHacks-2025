@@ -61,6 +61,13 @@ async def latest_alerts():
     conn.close()
     return [{"Ticker": r[0], "Close": r[1], "Volume": r[2], "volume_z": r[3], "Volume_Ratio": r[4], "Volume_Alert": r[5], "RSI": r[6], "Timestamp": r[7]} for r in rows]
 
+@app.get("/api/active_alerts")
+def get_active_alerts():
+    conn = sqlite3.connect("backend/alerts.db")
+    df = pd.read_sql("SELECT * FROM active_alerts", conn)
+    conn.close()
+    return df.to_dict(orient="records")
+
 @app.get("/confidence")
 async def get_confidence():
     df = load_active_alerts()
