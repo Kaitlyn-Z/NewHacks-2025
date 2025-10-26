@@ -147,3 +147,33 @@ def run_alert_pipeline(tickers, days: int = 1, alert_threshold_z: float = 1.5, v
     update_latest_alerts_table(active_alerts_new)
     print(f"Processed alerts for {len(active_alerts_new)} active tickers.")
     return active_alerts_new
+
+def backtest_alerts(tickers, start_date, end_date, db_path=DB_PATH):
+    """
+    Simulate the alert pipeline on historical data between start_date and end_date.
+    Does NOT send emails, just computes what would have been triggered.
+    """
+    print(f"Running backtest for {len(tickers)} tickers from {start_date} to {end_date}...")
+    setup_database(db_path)
+    # Pull all historical data (modify fetch_stock_data to accept date ranges if needed)
+    data = fetch_stock_data(tickers, start_date=start_date, end_date=end_date)
+    if data.empty:
+        print("No data fetched for backtest.")
+        return pd.DataFrame()
+
+    data['volume_z'] = data.groupby('Ticker')['Volume'].transform(
+        lambda x: (x - x.rolling(50).mean()) / x.rolling(50).std()
+    )
+    data['Volume_Ratio'] = data['Volume'] / data.groupby('Ticker')['Volume'].transform('mean')
+    data['Volume_Alert'] = data['volume_z'].apply(classify_alert)
+    data['RSI'] = data.groupby('Ticker')['Close'].transform(lambda x: compute_rsi(x))
+
+    # Keep only days with an actual alert
+    alert_data = data[data['volume_z'] >= 1.5]
+    print(f"Backtest found {len(alert_data)} alert events across {alert_data['Ticker'].nunique()} tickers.")
+    
+    # Save to alerts.db so your dashboard can display it
+    with sqlite3.connect(db_path) as conn:
+        alert_data.to_sql("backtest_alerts", conn, if_exists="replace", index=False)
+    
+    return alert_data

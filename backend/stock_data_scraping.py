@@ -9,31 +9,28 @@ import yfinance as yf
 import pandas as pd
 from datetime import datetime, timedelta
 
-def fetch_stock_data(tickers, days=1):
-    """Fetch OHLCV data for given tickers and return a DataFrame."""
-    end_date = datetime.now()
-    start_date = end_date - timedelta(days=days)
-    data_frames = []
-
+def fetch_stock_data(tickers, days=None, start_date=None, end_date=None):
+    import yfinance as yf
+    all_data = []
     for t in tickers:
         try:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                df = yf.download(t, start=start_date, end=end_date, progress=False)
-            if df.empty:
-                print(f"Skipping invalid or empty ticker: {t}")
-                continue
-            df.reset_index(inplace=True)
+                if start_date and end_date:
+                    df = yf.download(t, start=start_date, end=end_date)
+                elif days:
+                    df = yf.download(t, period=f"{days}d", interval="1d")
+                else:
+                    df = yf.download(t, period="3mo", interval="1d")
             df = df.rename(columns={
                 "Date": "Date", "Open": "Open", "High": "High",
                 "Low": "Low", "Close": "Close", "Volume": "Volume"
             })
-            df["Ticker"] = t
-            data_frames.append(df)
+            df['Ticker'] = t
+            all_data.append(df)
         except Exception as e:
-            print(f"❌ Error fetching {t}: {e}")
+            print(f"Error fetching data for {t}: {e}")
             continue
-
-    if not data_frames:
+    if not all_data:
         return pd.DataFrame()
-    return pd.concat(data_frames, ignore_index=True)
+    return pd.concat(all_data)

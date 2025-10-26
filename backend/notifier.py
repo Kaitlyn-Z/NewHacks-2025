@@ -8,8 +8,9 @@ from dotenv import load_dotenv
 # Load .env file
 load_dotenv()
 
-EMAIL_USER = os.getenv("EMAIL_USER")
-EMAIL_PASS = os.getenv("EMAIL_PASS")
+EMAIL_USER = "meme.watchlist25@gmail.com"
+EMAIL_PASS = "dhxj mgug defo aonw"
+
 
 ###############
 
