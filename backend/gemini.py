@@ -8,7 +8,6 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 
-# TODO: import sqlite3 table from stock_analysis.py
 # use latest_alerts table from stock_analysis.py
 from stock_data_scraping import fetch_stock_data
 
@@ -96,27 +95,28 @@ def main():
     # Configure Gemini client
     client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
-    tickers = ["TSLA", "NVDA", "BYND"]
+    tickers = ["TSLA", "NVDA"]
     lookback_days = 3
 
     # Example Reddit posts (replace later with real scraped data)
     reddit_posts = [
-        "TSLA is mooning, everyone’s buying calls! 🚀🚀",
+        "TSLA is mooning, everyone’s buying calls! 🚀",
         "TSLA prices predicted to rise!",
         "NVDA might drop soon, too overpriced."
     ]
 
     momentum_df = fetch_stock_data(tickers, lookback_days)
-    sentiment_df = analyze_sentiment(client, reddit_posts)
+    print("Momentum Data:")
+    print(momentum_df)
 
-    if not sentiment_df.empty:
-        avg_sentiment = sentiment_df.groupby("ticker")["sentiment_score"].mean().reset_index()
-        combined = momentum_df.merge(avg_sentiment, on="ticker", how="left")
-    else:
-        combined = momentum_df.copy()
+    sentiment_df = analyze_sentiment(client, reddit_posts)
+    print("Sentiment Data:")
+    print(sentiment_df)
+
+    combined = momentum_df.copy()
 
     summary = summarize_market(client, combined)
-    print("📰 Gemini Market Summary:\n")
+    print("Gemini Market Summary:\n")
     print(summary)
 
 
