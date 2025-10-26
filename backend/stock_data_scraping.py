@@ -34,14 +34,17 @@ def fetch_stock_data(tickers, days):
             #print(f"Error fetching data for {t}: {e}")
             continue  # Skip to the next ticker
 
-    if all_data:
-        df_all = pd.DataFrame(all_data)
-    else:
-        df_all = pd.DataFrame(columns=["ticker", "date", "close", "volume"])
+    df_all = pd.DataFrame.from_records(all_data)
 
-    # Combine all tickers into one DataFrame
-    df = pd.DataFrame(all_data)
-    return df
+    # Enforce column order and data types
+    df_all = df_all.astype({
+        "ticker": "string",
+        "date": "string",
+        "close": "float",
+        "volume": "int"
+    }, errors="ignore")
+
+    return df_all
 
 
 # Testing purposes
