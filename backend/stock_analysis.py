@@ -55,7 +55,7 @@ def classify_alert(z):
         return 'Normal'
 
 
-def compute_rsi(series, window=14):
+def compute_rsi(series, window=6):
     """Compute RSI for a series."""
     rsi = ta.momentum.RSIIndicator(close=series, window=window).rsi()
     return rsi.reindex(series.index, fill_value=None)
