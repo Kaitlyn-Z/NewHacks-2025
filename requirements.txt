@@ -22,3 +22,5 @@ secure-smtplib==0.1.1
 # Utilities
 python-dotenv==1.0.0
 
+ta==0.11.0
+
