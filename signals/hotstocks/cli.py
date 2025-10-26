@@ -91,6 +91,49 @@ def run_pipeline(cfg: dict) -> dict:
     }
 
 
+def get_hot_tickers(cfg: dict) -> list[str]:
+    return [it["ticker"] for it in run_pipeline(cfg)["items"]]
+
+
+def find_posts_with_tickers(cfg: dict, tickers: list[str]) -> list[dict]:
+    """
+    Return recent Reddit posts that mention any of the given tickers.
+    Each item includes subreddit, title, tickers_found, score, num_comments, and permalink.
+    """
+    subs = cfg["subs"]
+    lookback_hours = int(cfg.get("lookback_hours", 240))
+    limits = cfg.get("limits", {})
+    posts_per_sub = int(limits.get("posts_per_sub", 100))
+
+    # Normalize tickers for matching
+    whitelist = set(t.upper() for t in tickers)
+    blacklist = set(map(str.upper, cfg.get("ticker_blacklist", [])))
+
+    all_posts = []
+    for sub in subs:
+        posts = fetch_recent_posts(sub, lookback_hours=lookback_hours, limit=posts_per_sub)
+        all_posts.extend(posts)
+
+    results = []
+    for p in all_posts:
+        title = p.get("title") or ""
+        body = p.get("selftext") or ""
+        merged = f"{title}\n{body}"
+
+        # Only find tickers from your provided list
+        found = extract_tickers(merged, whitelist=whitelist, blacklist=blacklist)
+        if found:
+            results.append({
+                "subreddit": p.get("subreddit"),
+                "title": title.strip(),
+                "tickers_found": list(found),
+                "score": int(p.get("score") or 0),
+                "num_comments": int(p.get("num_comments") or 0),
+
+            })
+    return results
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description="Reddit hot stocks pipeline")
     parser.add_argument(
@@ -126,6 +169,3 @@ def main(argv=None):
         except Exception:
             pass
         return 1
-
-def get_hot_tickers(cfg: dict) -> list[str]:
-    return [it["ticker"] for it in run_pipeline(cfg)["items"]]

@@ -96,7 +96,7 @@ def main():
     # Configure Gemini client
     client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
-    tickers = ["TSLA", "NVDA"]
+    tickers = ["TSLA", "NVDA", "BYND"]
     lookback_days = 3
 
     # Example Reddit posts (replace later with real scraped data)
