@@ -21,6 +21,9 @@ def prepare_stock_data(tickers, days):
     # Fetch data from stock_data_scraping.py
     data = fetch_stock_data(tickers, days)
 
+    if data.empty:
+        return pd.DataFrame(columns=[...])
+
     # Volume z-score
     data['volume_z'] = data.groupby('ticker')['volume'].transform(
         lambda x: (x - x.rolling(50).mean()) / x.rolling(50).std()
