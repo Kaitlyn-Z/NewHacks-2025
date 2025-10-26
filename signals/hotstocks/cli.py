@@ -9,12 +9,12 @@ from .io import write_output
 
 def run_pipeline(cfg: dict) -> dict:
     subs = cfg["subs"]
-    lookback_hours = int(cfg.get("lookback_hours", 24))
+    lookback_hours = int(cfg.get("lookback_hours", 240))
     limits = cfg.get("limits", {})
     posts_per_sub = int(limits.get("posts_per_sub", 100))
     comments_per_post = int(limits.get("comments_per_post", 200))
-    weights = cfg.get("weights", {"mentions": 1.0, "upvotes": 0.01, "comments": 0.05})
-    threshold = float(cfg.get("threshold", 50.0))
+    weights = cfg.get("weights", {"mentions": 1.0, "upvotes": 0.1, "comments": 0.2})
+    threshold = float(cfg.get("threshold", 750.0))
     permalinks_per_ticker = int(cfg.get("permalinks_per_ticker", 3))
     whitelist = set(map(str.upper, cfg.get("ticker_whitelist", []))) or None
     blacklist = set(map(str.upper, cfg.get("ticker_blacklist", [])))

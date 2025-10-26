@@ -35,8 +35,8 @@ def aggregate_and_score(
 
     # Keep top permalinks and compute hotness
     w_mentions = float(weights.get("mentions", 1.0))
-    w_upvotes = float(weights.get("upvotes", 0.01))
-    w_comments = float(weights.get("comments", 0.05))
+    w_upvotes = float(weights.get("upvotes", 0.1))
+    w_comments = float(weights.get("comments", 0.2))
 
     result: Dict[str, dict] = {}
     for t, m in per_ticker.items():

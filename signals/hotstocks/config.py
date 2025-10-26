@@ -6,8 +6,8 @@ from typing import Any, Dict
 DEFAULTS: Dict[str, Any] = {
     "subs": ["wallstreetbets", "stocks"],
     "lookback_hours": 240,
-    "threshold": 0.0,
-    "weights": {"mentions": 10.0, "upvotes": 0.1, "comments": 0.5},
+    "threshold": 750.0,
+    "weights": {"mentions": 10.0, "upvotes": 0.5, "comments": 1.0},
     "limits": {"posts_per_sub": 100, "comments_per_post": 200},
     "output_path": "data/hotstocks.json",
     "permalinks_per_ticker": 3,

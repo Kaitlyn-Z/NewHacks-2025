@@ -1,15 +1,15 @@
 {
   "subs": ["wallstreetbets", "stocks"],
   "lookback_hours": 240,
-  "threshold": 0.0,
+  "threshold": 750.0,
   "weights": {
     "mentions": 1.0,
-    "upvotes": 0.01,
-    "comments": 0.05
+    "upvotes": 0.1,
+    "comments": 0.2
   },
   "limits": {
     "posts_per_sub": 100,
-    "comments_per_post": 200
+    "comments_per_post": 2
   },
   "output_path": "data/hotstocks.json",
   "permalinks_per_ticker": 3,

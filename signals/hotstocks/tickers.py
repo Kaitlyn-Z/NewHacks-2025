@@ -10,7 +10,8 @@ _STOPWORDS: Set[str] = {
     "I", "A", "AN", "AND", "OR", "THE", "TO", "YOLO", "USA", "USD",
     "SEC", "CEO", "CFO", "ETF", "GDP", "CPI", "FOMC", "AI", "WSB",
     "S", "U", "US", "EDIT", "ALL", "ARE", "WITH", "VERY", "TRADE", 
-    "FAKE", "OF", "EPS", "EPG", "DD"
+    "FAKE", "OF", "EPS", "EPG", "DD", "RFK", "AMA", "CNBC", "P",
+    "D", "BUT", "IIRC", "RIP"
 }
 
 
