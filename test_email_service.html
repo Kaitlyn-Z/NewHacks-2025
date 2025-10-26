@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Email Service</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+    </style>
+</head>
+<body>
+    <h1>Email Service Test Page</h1>
+    <p>This page tests if the email service on port 5002 is accessible.</p>
+    
+    <button onclick="testHealth()">Test Health Check</button>
+    <button onclick="testConnection()">Test SMTP Connection</button>
+    <button onclick="testEmail()">Send Test Email</button>
+    
+    <div id="result"></div>
+    
+    <script>
+        const resultDiv = document.getElementById('result');
+        
+        function showResult(message, isSuccess) {
+            resultDiv.className = isSuccess ? 'success' : 'error';
+            resultDiv.textContent = message;
+        }
+        
+        async function testHealth() {
+            try {
+                const response = await fetch('http://localhost:5002/health');
+                const data = await response.json();
+                showResult(`✅ Health Check: ${JSON.stringify(data)}`, true);
+            } catch (error) {
+                showResult(`❌ Health Check Failed: ${error.message}`, false);
+            }
+        }
+        
+        async function testConnection() {
+            try {
+                const response = await fetch('http://localhost:5002/api/email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'test-connection' })
+                });
+                const data = await response.json();
+                showResult(`✅ SMTP Connection: ${data.message}`, data.success);
+            } catch (error) {
+                showResult(`❌ Connection Test Failed: ${error.message}`, false);
+            }
+        }
+        
+        async function testEmail() {
+            const email = prompt('Enter your email address:');
+            if (!email) return;
+            
+            try {
+                const response = await fetch('http://localhost:5002/api/email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'send-alert',
+                        email: email,
+                        alert: {
+                            ticker: 'TEST',
+                            priority: 'high',
+                            mentionCount: 100,
+                            volumeRatio: 3.5,
+                            currentPrice: 123.45,
+                            priceChange: 15.2,
+                            detectedAt: new Date().toISOString()
+                        }
+                    })
+                });
+                const data = await response.json();
+                showResult(`${data.success ? '✅' : '❌'} ${data.message}`, data.success);
+            } catch (error) {
+                showResult(`❌ Email Test Failed: ${error.message}`, false);
+            }
+        }
+    </script>
+</body>
+</html>
+

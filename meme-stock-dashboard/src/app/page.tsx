@@ -122,7 +122,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (autoRefresh) {
-      const interval = setInterval(fetchAlerts, 30000); // 30 seconds
+      const interval = setInterval(fetchAlerts, 1800000); // 30 minutes (matches scheduler)
       return () => clearInterval(interval);
     }
   }, [autoRefresh, emailEnabled, userEmail]);

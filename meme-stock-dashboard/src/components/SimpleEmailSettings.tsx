@@ -106,9 +106,11 @@ const SimpleEmailSettingsModal: React.FC<SimpleEmailSettingsProps> = ({ isOpen, 
         });
       }
     } catch (error) {
+      console.error('Email test error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       setTestResult({
         success: false,
-        message: 'Failed to send test email: ' + (error as Error).message,
+        message: `Failed to send test email: ${errorMessage}. Make sure the email service is running on port 5002.`,
       });
     } finally {
       setTesting(false);
